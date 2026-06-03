@@ -1,0 +1,45 @@
+CHESS ENGINE DEVELOPMENT LOG
+============================
+
+[2026-06-03] PROJECT INITIALISATION
+- Established file architecture: index.php, engine.js, board.js, pieces.js.
+- Defined initial 8x8 board array and piece symbols.
+
+[2026-06-03] CORE MOVEMENT ENGINE
+- Implemented PieceMovement object.
+- Added logic for sliding pieces (Rook, Bishop, Queen).
+- Added Knight jump and Pawn forward/capture logic.
+
+[2026-06-03] VALIDATION & SAFETY
+- Integrated GameLogic.isInCheck to detect attacks on the King.
+- Implemented GameLogic.wouldBeInCheck to block illegal moves.
+
+[2026-06-03] SPECIAL RULES
+- Added Castling logic (King/Rook movement and path validation).
+- Added En Passant logic and state tracking.
+- Added Pawn Promotion UI and logic.
+
+[2026-06-03] VISUAL FEEDBACK & UX
+- Implemented CSS King Flash animation for illegal moves.
+- Refined DOM rendering cycle to prevent animation clipping.
+
+[2026-06-03] ENGINE REFACTOR & RULE COMPLIANCE
+- Refactored check validation (`wouldBeInCheck`) to pass an isolated, simulated board array through the verification chain, preventing sliding pieces from "looking through" the King's old square.
+- Reordered piece execution sequence in `movePiece` to ensure En Passant captures are cleared from the grid before wiping out the move target for the subsequent turn.
+- Patched structural castling loopholes by validating the `hasMoved` flags for both the King and the specific Rook, and ensuring the King cannot castle out of, through, or into check.
+- Fixed an open-ended CSS animation keyframe issue in `style.css` that was preventing the King check-flash from fading out seamlessly.
+
+[2026-06-03] QUALITY OF LIFE FEATURE: ARROWS
+- Implemented dynamic SVG overlay system matching the canvas dimensions.
+- Integrated right-click event interception (`oncontextmenu`, `onmousedown`, `onmouseup`) to record analysis sweeps.
+- Added dynamic line calculation with custom SVG marker vectors (`#arrowhead`) configured to automatically wipe on game execution left-clicks.
+
+[2026-06-03] UI ENHANCEMENT: L-SHAPED ARROWS
+- Migrated arrow rendering from SVG Line to SVG Polyline.
+- Added pathfinding logic for "Knight-style" movements to create a 90-degree elbow.
+- Adjusted arrowhead offsets to ensure clean termination at square centres.
+
+[2026-06-03] UI OVERHAUL: OUTSIDE BOARD LABELS
+- Re-architected board structure to separate coordinates from square DOM elements using grid wrapping.
+- Implemented static external rendering for ranks 8-1 on the left layout column and files a-h on the bottom layout row.
+- Eliminated node-overwriting issues during square redraw events.
