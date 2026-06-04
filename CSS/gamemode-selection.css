@@ -139,6 +139,9 @@
     flex-direction: column;
     background-color: #222;
     overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
 .board-screen.hidden {
@@ -149,9 +152,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 40px;
+    padding: 20px 140px 20px 20px;
     background-color: #1a1a1a;
     border-bottom: 1px solid #333;
+    width: 100%;
+    position: absolute;
+    top: 0;
 }
 
 .back-button {
@@ -164,6 +170,7 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    margin-left: 120px;
 }
 
 .back-button:hover {
@@ -182,9 +189,8 @@
     letter-spacing: 1px;
 }
 
-/* Adjust board wrapper to fit in flex container */
+/* Keep board wrapper at original size */
 .board-wrapper {
-    flex: 1;
     display: grid;
     grid-template-columns: 30px 640px;
     grid-template-rows: 640px 30px;
@@ -192,9 +198,6 @@
     padding: 10px;
     border-radius: 4px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-    width: fit-content;
-    margin: auto;
-    margin-bottom: 20px;
 }
 
 /* Responsive Design */
