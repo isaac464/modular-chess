@@ -2,8 +2,10 @@
 const GamemodeManager = {
     currentMode: null,
     currentSettings: null,
-    sandboxSettings: {
-        freeMovement: true,
+    // Track selected settings for current game
+    activeSettings: {
+        autoFlip: false,
+        freeMovement: false,
         emptyBoard: false
     },
 
@@ -11,20 +13,46 @@ const GamemodeManager = {
         classic: {
             name: 'Classic Chess',
             description: 'Play traditional chess with no time limit',
-            settings: {
-                timeLimit: null,
-                movesLimit: null,
-                customRules: false,
+            availableSettings: [
+                {
+                    id: 'auto-flip',
+                    name: 'Auto-flip Board',
+                    description: 'Perspective automatically shifts to the current player',
+                    type: 'checkbox',
+                    default: false
+                }
+            ],
+            engineSettings: {
                 sandboxMode: false
             }
         },
         sandbox: {
             name: 'Sandbox',
             description: 'Free placement mode. Create custom positions.',
-            settings: {
-                timeLimit: null,
-                movesLimit: null,
-                customRules: true,
+            availableSettings: [
+                {
+                    id: 'auto-flip',
+                    name: 'Auto-flip Board',
+                    description: 'Perspective automatically shifts to the current player',
+                    type: 'checkbox',
+                    default: false
+                },
+                {
+                    id: 'free-movement',
+                    name: 'Free Piece Movement',
+                    description: 'Move any piece anywhere without chess rules',
+                    type: 'checkbox',
+                    default: true
+                },
+                {
+                    id: 'empty-board',
+                    name: 'Start with Empty Board',
+                    description: 'Begin with a completely empty board instead of starting position',
+                    type: 'checkbox',
+                    default: false
+                }
+            ],
+            engineSettings: {
                 sandboxMode: true
             }
         }
@@ -88,19 +116,19 @@ const GamemodeManager = {
             });
         }
 
-        // Sandbox settings buttons
-        const sandboxBackBtn = document.getElementById('sandbox-back-btn');
-        const sandboxStartBtn = document.getElementById('sandbox-start-btn');
+        // Settings screen buttons
+        const settingsBackBtn = document.getElementById('settings-back-btn');
+        const settingsStartBtn = document.getElementById('settings-start-btn');
 
-        if (sandboxBackBtn) {
-            sandboxBackBtn.addEventListener('click', () => {
-                this.closeSandboxSettings();
+        if (settingsBackBtn) {
+            settingsBackBtn.addEventListener('click', () => {
+                this.closeSettings();
             });
         }
 
-        if (sandboxStartBtn) {
-            sandboxStartBtn.addEventListener('click', () => {
-                this.startSandboxGame();
+        if (settingsStartBtn) {
+            settingsStartBtn.addEventListener('click', () => {
+                this.startGameFromSettings();
             });
         }
 
@@ -118,6 +146,8 @@ const GamemodeManager = {
         if (autoFlipToggle) {
             autoFlipToggle.addEventListener('change', (e) => {
                 GameLogic.autoFlip = e.target.checked;
+                this.activeSettings.autoFlip = e.target.checked;
+                this.updateFlipButtonVisibility();
                 if (GameLogic.autoFlip) {
                     GameLogic.perspective = GameLogic.turn;
                     BoardRenderer.render();
@@ -133,40 +163,54 @@ const GamemodeManager = {
         }
 
         this.currentMode = mode;
-        this.currentSettings = JSON.parse(JSON.stringify(this.gamemodes[mode].settings));
+        this.currentSettings = JSON.parse(JSON.stringify(this.gamemodes[mode].engineSettings));
         console.log(`Selected gamemode: ${mode}`, this.currentSettings);
 
-        // If sandbox mode, show settings first
-        if (mode === 'sandbox') {
-            this.showSandboxSettings();
-        } else {
-            this.startGame();
-        }
+        this.showSettings(mode);
     },
 
-    showSandboxSettings() {
+    showSettings(mode) {
         const gamemodeScreen = document.getElementById('gamemode-screen');
-        const sandboxScreen = document.getElementById('sandbox-settings-screen');
+        const settingsScreen = document.getElementById('settings-screen');
+        const settingsTitle = document.getElementById('settings-title');
+        const settingsSubtitle = document.getElementById('settings-subtitle');
+        const settingsContent = document.getElementById('settings-content');
 
-        if (gamemodeScreen && sandboxScreen) {
+        if (gamemodeScreen && settingsScreen) {
+            const config = this.gamemodes[mode];
+            settingsTitle.textContent = `${config.name} Settings`;
+            settingsSubtitle.textContent = config.description;
+
+            // Dynamically generate settings HTML
+            settingsContent.innerHTML = '';
+            config.availableSettings.forEach(setting => {
+                const group = document.createElement('div');
+                group.className = 'settings-group';
+
+                if (setting.type === 'checkbox') {
+                    group.innerHTML = `
+                        <label class="settings-label">
+                            <input type="checkbox" id="setting-${setting.id}" class="settings-checkbox" ${setting.default ? 'checked' : ''}>
+                            <span class="checkbox-text">${setting.name}</span>
+                            <span class="checkbox-desc">${setting.description}</span>
+                        </label>
+                    `;
+                }
+
+                settingsContent.appendChild(group);
+            });
+
             gamemodeScreen.classList.add('hidden');
-            sandboxScreen.classList.remove('hidden');
-
-            // Set checkboxes to current sandbox settings
-            const freeMoveCheckbox = document.getElementById('enable-free-movement');
-            const emptyBoardCheckbox = document.getElementById('enable-clear-board');
-
-            if (freeMoveCheckbox) freeMoveCheckbox.checked = this.sandboxSettings.freeMovement;
-            if (emptyBoardCheckbox) emptyBoardCheckbox.checked = this.sandboxSettings.emptyBoard;
+            settingsScreen.classList.remove('hidden');
         }
     },
 
-    closeSandboxSettings() {
+    closeSettings() {
         const gamemodeScreen = document.getElementById('gamemode-screen');
-        const sandboxScreen = document.getElementById('sandbox-settings-screen');
+        const settingsScreen = document.getElementById('settings-screen');
 
-        if (gamemodeScreen && sandboxScreen) {
-            sandboxScreen.classList.add('hidden');
+        if (gamemodeScreen && settingsScreen) {
+            settingsScreen.classList.add('hidden');
             gamemodeScreen.classList.remove('hidden');
 
             // Reset current mode
@@ -175,16 +219,24 @@ const GamemodeManager = {
         }
     },
 
-    startSandboxGame() {
-        // Update sandbox settings from checkboxes
-        const freeMoveCheckbox = document.getElementById('enable-free-movement');
-        const emptyBoardCheckbox = document.getElementById('enable-clear-board');
+    startGameFromSettings() {
+        const config = this.gamemodes[this.currentMode];
 
-        this.sandboxSettings.freeMovement = freeMoveCheckbox.checked;
-        this.sandboxSettings.emptyBoard = emptyBoardCheckbox.checked;
+        // Collect setting values
+        config.availableSettings.forEach(setting => {
+            const element = document.getElementById(`setting-${setting.id}`);
+            if (element) {
+                if (setting.type === 'checkbox') {
+                    // Update internal state
+                    if (setting.id === 'auto-flip') this.activeSettings.autoFlip = element.checked;
+                    if (setting.id === 'free-movement') this.activeSettings.freeMovement = element.checked;
+                    if (setting.id === 'empty-board') this.activeSettings.emptyBoard = element.checked;
+                }
+            }
+        });
 
-        // Apply empty board if selected
-        if (this.sandboxSettings.emptyBoard) {
+        // Handle board initialization based on settings
+        if (this.activeSettings.emptyBoard) {
             GameLogic.clearBoard();
         } else {
             GameLogic.resetBoard();
@@ -212,12 +264,12 @@ const GamemodeManager = {
     },
 
     startGame() {
-        const sandboxScreen = document.getElementById('sandbox-settings-screen');
+        const settingsScreen = document.getElementById('settings-screen');
         const gamemodeScreen = document.getElementById('gamemode-screen');
         const boardScreen = document.getElementById('board-screen');
 
         if (boardScreen) {
-            if (sandboxScreen) sandboxScreen.classList.add('hidden');
+            if (settingsScreen) settingsScreen.classList.add('hidden');
             if (gamemodeScreen) gamemodeScreen.classList.add('hidden');
             boardScreen.classList.remove('hidden');
 
@@ -227,8 +279,26 @@ const GamemodeManager = {
                 titleDisplay.textContent = this.gamemodes[this.currentMode].name;
             }
 
+            // Sync board UI controls with active settings
+            const autoFlipToggle = document.getElementById('auto-flip-toggle');
+            if (autoFlipToggle) {
+                autoFlipToggle.checked = this.activeSettings.autoFlip;
+            }
+            this.updateFlipButtonVisibility();
+
             // Initialize the chess board with gamemode settings
             this.initializeBoard();
+        }
+    },
+
+    updateFlipButtonVisibility() {
+        const flipBoardBtn = document.getElementById('flip-board-btn');
+        if (flipBoardBtn) {
+            if (this.activeSettings.autoFlip) {
+                flipBoardBtn.classList.add('hidden');
+            } else {
+                flipBoardBtn.classList.remove('hidden');
+            }
         }
     },
 
@@ -244,42 +314,28 @@ const GamemodeManager = {
     },
 
     applyGamemodeSettings() {
-        // Apply the current gamemode settings to the game
+        // Apply the current gamemode settings to the game engine
         const settings = this.currentSettings;
 
         // Apply sandbox mode
         if (settings.sandboxMode) {
             GameLogic.isSandboxMode = true;
-            // Apply the specific free movement setting
-            GameLogic.sandboxFreeMovementEnabled = this.sandboxSettings.freeMovement;
-            console.log(`Sandbox mode enabled - free piece movement ${this.sandboxSettings.freeMovement ? 'enabled' : 'disabled'}`);
+            GameLogic.sandboxFreeMovementEnabled = this.activeSettings.freeMovement;
         } else {
             GameLogic.isSandboxMode = false;
             GameLogic.sandboxFreeMovementEnabled = false;
         }
 
-        // Apply time limit if set
-        if (settings.timeLimit) {
-            console.log(`Applying time limit: ${settings.timeLimit}ms`);
-            // TODO: Initialize timer UI
-        }
-
-        // Apply move limit if set
-        if (settings.movesLimit) {
-            console.log(`Applying moves limit: ${settings.movesLimit}`);
-            // TODO: Initialize move counter
-        }
-
-        // Apply custom rules if enabled
-        if (settings.customRules) {
-            console.log('Applying custom rules');
-            // TODO: Load custom rule logic
+        // Apply shared settings
+        GameLogic.autoFlip = this.activeSettings.autoFlip;
+        if (GameLogic.autoFlip) {
+            GameLogic.perspective = GameLogic.turn;
         }
     },
 
     returnToMenu() {
         const gamemodeScreen = document.getElementById('gamemode-screen');
-        const sandboxScreen = document.getElementById('sandbox-settings-screen');
+        const settingsScreen = document.getElementById('settings-screen');
         const boardScreen = document.getElementById('board-screen');
         const confirmDialog = document.getElementById('exit-confirmation-dialog');
 
@@ -288,7 +344,7 @@ const GamemodeManager = {
             GameLogic.resetBoard();
 
             boardScreen.classList.add('hidden');
-            sandboxScreen.classList.add('hidden');
+            if (settingsScreen) settingsScreen.classList.add('hidden');
             confirmDialog.classList.add('hidden');
             gamemodeScreen.classList.remove('hidden');
 
@@ -300,10 +356,18 @@ const GamemodeManager = {
             this.currentMode = null;
             this.currentSettings = null;
 
+            // Reset active settings
+            this.activeSettings = {
+                autoFlip: false,
+                freeMovement: false,
+                emptyBoard: false
+            };
+
             // Reset perspective UI
             const autoFlipToggle = document.getElementById('auto-flip-toggle');
             if (autoFlipToggle) autoFlipToggle.checked = false;
             GameLogic.autoFlip = false;
+            this.updateFlipButtonVisibility();
 
             console.log('Returned to gamemode selection menu - board reset');
         }

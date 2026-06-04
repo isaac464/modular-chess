@@ -93,6 +93,8 @@ html, body {
 .black { background-color: #b58863; }
 .selected { background-color: #7b945d !important; }
 
+.hidden { display: none !important; }
+
 /* SVG Arrow Styling */
 .chess-arrow {
     stroke: rgba(247, 148, 29, 0.85);
@@ -110,7 +112,7 @@ html, body {
 
 @keyframes flash-red {
     0% { background-color: #ff4d4d !important; }
-    100% { background-color: #ff4d4d; } 
+    100% { background-color: #ff4d4d; }
 }
 
 /* Board Controls */

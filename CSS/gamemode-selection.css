@@ -235,8 +235,8 @@
     }
 }
 
-/* Sandbox Settings Screen */
-.sandbox-settings-screen {
+/* Gamemode Settings Screen */
+.settings-screen {
     position: fixed;
     top: 0;
     left: 0;
@@ -250,11 +250,11 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.sandbox-settings-screen.hidden {
+.settings-screen.hidden {
     display: none;
 }
 
-.sandbox-settings-container {
+.settings-container {
     text-align: center;
     color: #ffffff;
     max-width: 600px;
