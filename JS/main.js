@@ -42,7 +42,7 @@ const GamemodeManager = {
                     name: 'Free Piece Movement',
                     description: 'Move any piece anywhere without chess rules',
                     type: 'checkbox',
-                    default: true
+                    default: false
                 },
                 {
                     id: 'empty-board',
