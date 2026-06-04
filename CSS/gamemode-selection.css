@@ -201,20 +201,20 @@
 }
 
 .gamemode-logo {
-    width: 150px;       /* Set your desired width */
-    height: auto;        /* Maintains the original aspect ratio */
-    display: block;      /* Helps with neat alignment and spacing */
-    margin: 20px auto;   /* Centres the logo horizontally if needed */
+    max-width: 600px;    /* Prevents it being too large */
+    width: 90%;          /* Allows it to scale down on smaller screens */
+    height: auto;
+    display: block;
+    margin: 0px auto;   /* Maintains your vertical spacing */
 }
 
 .logo-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
-    background-color: transparent !important;
+    width: 100%;         /* Ensures the container spans the full width */
+    background: none !important;
     box-shadow: none;
-    background-image: none;
 }
 
 /* Responsive Design */
