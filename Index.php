@@ -71,10 +71,6 @@
             <h2 id="gamemode-title-display" class="gamemode-display">Classic Chess</h2>
             <div class="board-controls">
                 <button id="flip-board-btn" class="control-btn" title="Flip Board Perspective">🔄 Flip Board</button>
-                <label class="control-label">
-                    <input type="checkbox" id="auto-flip-toggle" class="control-checkbox">
-                    <span class="control-text">Auto-flip</span>
-                </label>
             </div>
         </div>
 

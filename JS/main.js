@@ -134,24 +134,11 @@ const GamemodeManager = {
 
         // Perspective controls
         const flipBoardBtn = document.getElementById('flip-board-btn');
-        const autoFlipToggle = document.getElementById('auto-flip-toggle');
 
         if (flipBoardBtn) {
             flipBoardBtn.addEventListener('click', () => {
                 GameLogic.perspective = GameLogic.perspective === 'white' ? 'black' : 'white';
                 BoardRenderer.render();
-            });
-        }
-
-        if (autoFlipToggle) {
-            autoFlipToggle.addEventListener('change', (e) => {
-                GameLogic.autoFlip = e.target.checked;
-                this.activeSettings.autoFlip = e.target.checked;
-                this.updateFlipButtonVisibility();
-                if (GameLogic.autoFlip) {
-                    GameLogic.perspective = GameLogic.turn;
-                    BoardRenderer.render();
-                }
             });
         }
     },
@@ -191,8 +178,10 @@ const GamemodeManager = {
                     group.innerHTML = `
                         <label class="settings-label">
                             <input type="checkbox" id="setting-${setting.id}" class="settings-checkbox" ${setting.default ? 'checked' : ''}>
-                            <span class="checkbox-text">${setting.name}</span>
-                            <span class="checkbox-desc">${setting.description}</span>
+                            <div class="setting-details">
+                                <span class="checkbox-text">${setting.name}</span>
+                                <span class="checkbox-desc">${setting.description}</span>
+                            </div>
                         </label>
                     `;
                 }
@@ -280,10 +269,6 @@ const GamemodeManager = {
             }
 
             // Sync board UI controls with active settings
-            const autoFlipToggle = document.getElementById('auto-flip-toggle');
-            if (autoFlipToggle) {
-                autoFlipToggle.checked = this.activeSettings.autoFlip;
-            }
             this.updateFlipButtonVisibility();
 
             // Initialize the chess board with gamemode settings
@@ -364,8 +349,6 @@ const GamemodeManager = {
             };
 
             // Reset perspective UI
-            const autoFlipToggle = document.getElementById('auto-flip-toggle');
-            if (autoFlipToggle) autoFlipToggle.checked = false;
             GameLogic.autoFlip = false;
             this.updateFlipButtonVisibility();
 
