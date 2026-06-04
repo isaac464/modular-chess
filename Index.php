@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Chess - Select Gamemode</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/gamemode-selection.css">
+    <link rel="stylesheet" href="CSS/style.css">
+    <link rel="stylesheet" href="CSS/gamemode-selection.css">
     <link rel="icon" type="image/png" href="Assets/favicon.PNG">
 </head>
 <body>
@@ -83,6 +83,13 @@
         <div class="board-header">
             <button id="back-button" class="back-button">← Back to Menu</button>
             <h2 id="gamemode-title-display" class="gamemode-display">Classic Chess</h2>
+            <div class="board-controls">
+                <button id="flip-board-btn" class="control-btn" title="Flip Board Perspective">🔄 Flip Board</button>
+                <label class="control-label">
+                    <input type="checkbox" id="auto-flip-toggle" class="control-checkbox">
+                    <span class="control-text">Auto-flip</span>
+                </label>
+            </div>
         </div>
         
         <div class="board-wrapper">
@@ -98,9 +105,9 @@
         </div>
     </div>
 
-    <script src="js/pieces.js"></script>
-    <script src="js/engine.js"></script>
-    <script src="js/board.js"></script>
-    <script src="js/main.js"></script>
+    <script src="JS/pieces.js"></script>
+    <script src="JS/engine.js"></script>
+    <script src="JS/board.js"></script>
+    <script src="JS/main.js"></script>
 </body>
 </html>

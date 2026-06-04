@@ -112,3 +112,42 @@ html, body {
     0% { background-color: #ff4d4d !important; }
     100% { background-color: #ff4d4d; } 
 }
+
+/* Board Controls */
+.board-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.control-btn {
+    background: #444;
+    color: white;
+    border: 1px solid #555;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+
+.control-btn:hover {
+    background: #555;
+}
+
+.control-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #bdc3c7;
+    cursor: pointer;
+    font-size: 0.9em;
+    user-select: none;
+}
+
+.control-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #e74c3c;
+}
