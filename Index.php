@@ -5,6 +5,7 @@
     <title>Chess - Select Gamemode</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/gamemode-selection.css">
+    <link rel="icon" type="image/png" href="Assets/favicon.PNG">
 </head>
 <body>
 
