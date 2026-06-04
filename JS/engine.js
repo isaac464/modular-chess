@@ -18,6 +18,8 @@ const GameLogic = {
     hasMoved: { wK: false, wR_left: false, wR_right: false, bK: false, bR_left: false, bR_right: false },
     isSandboxMode: false,
     sandboxFreeMovementEnabled: true,
+    perspective: 'white',
+    autoFlip: false,
 
     getPieceAt(row, col) { return this.boardState[row][col]; },
 
@@ -38,6 +40,7 @@ const GameLogic = {
         this.isPromoting = false;
         this.promotionSquare = null;
         this.hasMoved = { wK: false, wR_left: false, wR_right: false, bK: false, bR_left: false, bR_right: false };
+        this.perspective = 'white';
     },
 
     clearBoard() {
@@ -144,6 +147,7 @@ const GameLogic = {
         }
 
         this.turn = this.turn === 'white' ? 'black' : 'white';
+        if (this.autoFlip) this.perspective = this.turn;
         return true;
     },
 
@@ -152,6 +156,7 @@ const GameLogic = {
         this.boardState[this.promotionSquare.row][this.promotionSquare.col] = prefix + type;
         this.isPromoting = false;
         this.turn = this.turn === 'white' ? 'black' : 'white';
+        if (this.autoFlip) this.perspective = this.turn;
     },
 
     checkMoveIsValid(fR, fC, tR, tC) {
