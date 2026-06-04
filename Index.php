@@ -12,8 +12,10 @@
     <!-- Gamemode Selection Screen -->
     <div id="gamemode-screen" class="gamemode-screen">
         <div class="gamemode-container">
+            <div class="logo-container">
+                <img src="Assets/logo.png" alt="Modular Chess Logo" class="gamemode-logo">
+            </div>
             <h1 class="gamemode-title">Modular Chess</h1>
-            <img src="Assets/LOGO.png" alt="Modular Chess Logo" class="gamemode-logo">
             <p class="gamemode-subtitle">Select Your Gamemode</p>
             
             <div class="gamemodes-grid">
@@ -25,7 +27,7 @@
                 </div>
             </div>
 
-            <p class="gamemode-footer">Hold to select a mode • Press back to return</p>
+            <p class="gamemode-footer">Click to select a mode • Press back to return</p>
         </div>
     </div>
 
