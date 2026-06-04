@@ -12,7 +12,8 @@
     <!-- Gamemode Selection Screen -->
     <div id="gamemode-screen" class="gamemode-screen">
         <div class="gamemode-container">
-            <h1 class="gamemode-title">CHESS</h1>
+            <h1 class="gamemode-title">Modular Chess</h1>
+            <img src="Assets/LOGO.png" alt="Modular Chess Logo" class="gamemode-logo">
             <p class="gamemode-subtitle">Select Your Gamemode</p>
             
             <div class="gamemodes-grid">

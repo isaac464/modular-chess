@@ -200,6 +200,13 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
+.gamemode-logo {
+    width: 150px;       /* Set your desired width */
+    height: auto;        /* Maintains the original aspect ratio */
+    display: block;      /* Helps with neat alignment and spacing */
+    margin: 20px auto;   /* Centres the logo horizontally if needed */
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .gamemode-title {
