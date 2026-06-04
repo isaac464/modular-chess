@@ -235,8 +235,8 @@
     }
 }
 
-/* Sandbox Settings Screen */
-.sandbox-settings-screen {
+/* Gamemode Settings Screen */
+.settings-screen {
     position: fixed;
     top: 0;
     left: 0;
@@ -250,11 +250,11 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.sandbox-settings-screen.hidden {
+.settings-screen.hidden {
     display: none;
 }
 
-.sandbox-settings-container {
+.settings-container {
     text-align: center;
     color: #ffffff;
     max-width: 600px;
@@ -316,18 +316,26 @@
     margin-top: 2px;
 }
 
+.setting-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .checkbox-text {
     font-size: 1.1em;
     font-weight: 600;
     display: block;
     color: #ecf0f1;
+    line-height: 1.2;
 }
 
 .checkbox-desc {
-    font-size: 0.9em;
-    color: #7f8c8d;
+    font-size: 0.95em;
+    color: #bdc3c7;
     display: block;
-    margin-top: 5px;
+    margin-top: 4px;
+    line-height: 1.4;
 }
 
 .settings-buttons {
