@@ -5,16 +5,16 @@ const BoardRenderer = {
         'wR': '♖', 'wN': '♘', 'wB': '♗', 'wQ': '♕', 'wK': '♔', 'wP': '♙',
         'bR': '♜', 'bN': '♞', 'bB': '♝', 'bQ': '♛', 'bK': '♚', 'bP': '♟'
     },
-    
+
     // Tracking for right-click arrows
     rightClickStart: null,
-    arrows: [], 
+    arrows: [],
 
-    init() { 
+    init() {
         this.svgContainer = document.getElementById('arrow-svg');
         this.setupGlobalListeners();
         this.renderOutsideCoordinates();
-        this.render(); 
+        this.render();
     },
 
     setupGlobalListeners() {
@@ -42,37 +42,48 @@ const BoardRenderer = {
             leftCoords.innerHTML = '';
             bottomCoords.innerHTML = '';
 
-            // Render numbers descending from 8 down to 1 (matching board rows)
-            for (let i = 8; i >= 1; i--) {
+            const isWhitePerspective = GameLogic.perspective === 'white';
+
+            // Render numbers
+            for (let i = 0; i < 8; i++) {
                 const span = document.createElement('span');
-                span.innerText = i;
+                span.innerText = isWhitePerspective ? (8 - i) : (i + 1);
                 leftCoords.appendChild(span);
             }
 
-            // Render letters from a to h
+            // Render letters
             for (let i = 0; i < 8; i++) {
                 const span = document.createElement('span');
-                span.innerText = String.fromCharCode(97 + i); // 97 is 'a'
+                const charCode = isWhitePerspective ? (97 + i) : (104 - i);
+                span.innerText = String.fromCharCode(charCode);
                 bottomCoords.appendChild(span);
             }
         }
     },
 
     render() {
+        // Update coordinates whenever we render
+        this.renderOutsideCoordinates();
+
         // Keep the SVG element when clearing the board innerHTML
         this.container.innerHTML = '';
         this.container.appendChild(this.svgContainer);
         this.clearArrows(); // Reset visual arrows on a formal board state change
 
-        for (let row = 0; row < 8; row++) {
-            for (let col = 0; col < 8; col++) {
+        const isWhitePerspective = GameLogic.perspective === 'white';
+
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const row = isWhitePerspective ? r : 7 - r;
+                const col = isWhitePerspective ? c : 7 - c;
+
                 const square = document.createElement('div');
                 let colorClass = (row + col) % 2 === 0 ? 'white' : 'black';
-                
+
                 if (GameLogic.selectedSquare && GameLogic.selectedSquare.row === row && GameLogic.selectedSquare.col === col) {
                     colorClass = 'selected';
                 }
-                
+
                 square.className = `square ${colorClass}`;
                 square.dataset.row = row;
                 square.dataset.col = col;
@@ -82,10 +93,10 @@ const BoardRenderer = {
                 if (pieceCode !== '.') {
                     square.innerText = this.pieceSymbols[pieceCode];
                 }
-                
+
                 // Left click handling
                 square.onclick = () => this.handleSquareClick(row, col);
-                
+
                 // Right click handling for drawing arrows
                 square.onmousedown = (e) => {
                     if (e.button === 2) { // Right click down
@@ -115,14 +126,14 @@ const BoardRenderer = {
         const selected = GameLogic.selectedSquare;
         if (selected) {
             const moveResult = GameLogic.movePiece(selected.row, selected.col, row, col);
-            
+
             if (moveResult === true || moveResult === "promote") {
                 GameLogic.selectedSquare = null;
                 this.render();
             } else {
                 const kingInCheck = GameLogic.isInCheck(GameLogic.turn);
                 const piece = GameLogic.getPieceAt(row, col);
-                
+
                 if (piece !== '.' && (piece.startsWith('w') ? 'white' : 'black') === GameLogic.turn) {
                     GameLogic.selectedSquare = { row, col };
                 } else {
@@ -168,11 +179,11 @@ const BoardRenderer = {
             marker.setAttribute('refX', '4');
             marker.setAttribute('refY', '3');
             marker.setAttribute('orient', 'auto');
-        
+
             const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
             polygon.setAttribute('points', '0 0, 6 3, 0 6');
             polygon.setAttribute('fill', 'rgba(247, 148, 29, 0.85)');
-        
+
             marker.appendChild(polygon);
             defs.appendChild(marker);
             this.svgContainer.appendChild(defs);
@@ -183,12 +194,18 @@ const BoardRenderer = {
         oldArrows.forEach(a => a.remove());
 
         const squareSize = 80;
+        const isWhitePerspective = GameLogic.perspective === 'white';
 
         this.arrows.forEach(arrow => {
-            const x1 = (arrow.start.col * squareSize) + (squareSize / 2);
-            const y1 = (arrow.start.row * squareSize) + (squareSize / 2);
-            let x2 = (arrow.end.col * squareSize) + (squareSize / 2);
-            let y2 = (arrow.end.row * squareSize) + (squareSize / 2);
+            const startCol = isWhitePerspective ? arrow.start.col : 7 - arrow.start.col;
+            const startRow = isWhitePerspective ? arrow.start.row : 7 - arrow.start.row;
+            const endCol = isWhitePerspective ? arrow.end.col : 7 - arrow.end.col;
+            const endRow = isWhitePerspective ? arrow.end.row : 7 - arrow.end.row;
+
+            const x1 = (startCol * squareSize) + (squareSize / 2);
+            const y1 = (startRow * squareSize) + (squareSize / 2);
+            let x2 = (endCol * squareSize) + (squareSize / 2);
+            let y2 = (endRow * squareSize) + (squareSize / 2);
 
             const rowDiff = Math.abs(arrow.start.row - arrow.end.row);
             const colDiff = Math.abs(arrow.start.col - arrow.end.col);
@@ -201,7 +218,7 @@ const BoardRenderer = {
                 // Calculate the elbow: move vertically first, then horizontally
                 const elbowX = x1;
                 const elbowY = y2;
-            
+
                 // Shorten the final segment so the arrowhead doesn't overlap the center
                 const angle = Math.atan2(y2 - elbowY, x2 - elbowX);
                 const shortX2 = x2 - Math.cos(angle) * 15;
@@ -225,14 +242,14 @@ const BoardRenderer = {
     flashKing() {
         const kingChar = GameLogic.turn === 'white' ? 'wK' : 'bK';
         const squares = this.container.getElementsByClassName('square');
-    
+
         for (let sq of squares) {
             const r = parseInt(sq.dataset.row);
             const c = parseInt(sq.dataset.col);
-        
+
             if (GameLogic.getPieceAt(r, c) === kingChar) {
                 sq.classList.remove('check-flash');
-                void sq.offsetWidth; 
+                void sq.offsetWidth;
                 sq.classList.add('check-flash');
                 break;
             }

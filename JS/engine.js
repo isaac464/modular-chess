@@ -16,8 +16,51 @@ const GameLogic = {
     isPromoting: false,
     promotionSquare: null,
     hasMoved: { wK: false, wR_left: false, wR_right: false, bK: false, bR_left: false, bR_right: false },
+    isSandboxMode: false,
+    sandboxFreeMovementEnabled: true,
+    perspective: 'white',
+    autoFlip: false,
 
     getPieceAt(row, col) { return this.boardState[row][col]; },
+
+    resetBoard() {
+        this.boardState = [
+            ['bR', 'bN', 'bB', 'bQ', 'bK', 'bB', 'bN', 'bR'],
+            ['bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP', 'bP'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP', 'wP'],
+            ['wR', 'wN', 'wB', 'wQ', 'wK', 'wB', 'wN', 'wR']
+        ];
+        this.turn = 'white';
+        this.selectedSquare = null;
+        this.enPassantTarget = null;
+        this.isPromoting = false;
+        this.promotionSquare = null;
+        this.hasMoved = { wK: false, wR_left: false, wR_right: false, bK: false, bR_left: false, bR_right: false };
+        this.perspective = 'white';
+    },
+
+    clearBoard() {
+        this.boardState = [
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.'],
+            ['.',  '.',  '.',  '.',  '.',  '.',  '.',  '.']
+        ];
+        this.turn = 'white';
+        this.selectedSquare = null;
+        this.enPassantTarget = null;
+        this.isPromoting = false;
+        this.promotionSquare = null;
+        this.hasMoved = { wK: false, wR_left: false, wR_right: false, bK: false, bR_left: false, bR_right: false };
+    },
 
     isInCheck(color, customBoard = this.boardState) {
         const kingChar = color === 'white' ? 'wK' : 'bK';
@@ -60,7 +103,9 @@ const GameLogic = {
     movePiece(fromRow, fromCol, toRow, toCol) {
         if (this.isPromoting) return false;
         if (!this.checkMoveIsValid(fromRow, fromCol, toRow, toCol)) return false;
-        if (this.wouldBeInCheck(fromRow, fromCol, toRow, toCol)) return false;
+        
+        // In sandbox mode with free movement, skip check validation
+        if (!(this.isSandboxMode && this.sandboxFreeMovementEnabled) && this.wouldBeInCheck(fromRow, fromCol, toRow, toCol)) return false;
 
         const piece = this.boardState[fromRow][fromCol];
 
@@ -102,6 +147,7 @@ const GameLogic = {
         }
 
         this.turn = this.turn === 'white' ? 'black' : 'white';
+        if (this.autoFlip) this.perspective = this.turn;
         return true;
     },
 
@@ -110,10 +156,17 @@ const GameLogic = {
         this.boardState[this.promotionSquare.row][this.promotionSquare.col] = prefix + type;
         this.isPromoting = false;
         this.turn = this.turn === 'white' ? 'black' : 'white';
+        if (this.autoFlip) this.perspective = this.turn;
     },
 
     checkMoveIsValid(fR, fC, tR, tC) {
         const piece = this.getPieceAt(fR, fC);
+        
+        // In sandbox mode with free movement enabled, allow moving any piece
+        if (this.isSandboxMode && this.sandboxFreeMovementEnabled) {
+            return piece !== '.';
+        }
+        
         if (piece === '.' || (piece.startsWith('w') ? 'white' : 'black') !== this.turn) return false;
         
         const target = this.getPieceAt(tR, tC);
@@ -138,6 +191,12 @@ const GameLogic = {
             }
             return true;
         }
+        
+        // In sandbox mode with free movement enabled, allow any piece to move to any square
+        if (this.isSandboxMode && this.sandboxFreeMovementEnabled) {
+            return true;
+        }
+        
         return PieceMovement.validateBasicMove(fR, fC, tR, tC, this.boardState, this.enPassantTarget);
     }
 };
