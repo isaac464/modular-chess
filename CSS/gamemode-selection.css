@@ -200,6 +200,23 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
 }
 
+.gamemode-logo {
+    max-width: 800px;    /* Prevents it being too large */
+    width: 90%;          /* Allows it to scale down on smaller screens */
+    height: auto;
+    display: block;
+    margin: 0px auto;   /* Maintains your vertical spacing */
+}
+
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;         /* Ensures the container spans the full width */
+    background: none !important;
+    box-shadow: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .gamemode-title {
