@@ -201,7 +201,7 @@
 }
 
 .gamemode-logo {
-    max-width: 600px;    /* Prevents it being too large */
+    max-width: 800px;    /* Prevents it being too large */
     width: 90%;          /* Allows it to scale down on smaller screens */
     height: auto;
     display: block;
