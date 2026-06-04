@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Local Chess Project</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="Assets/favicon.PNG">
 </head>
 <body>
 
