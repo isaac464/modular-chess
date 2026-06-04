@@ -28,4 +28,5 @@ Development Log
 Semi-detailed progress and architectural changes are tracked in the development logs located in the documentation folder.
 
 Licence
+
 This project is open-source and available under the MIT Licence.
