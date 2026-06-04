@@ -1,5 +1,5 @@
 # modular-chess
-A modular, vanilla JS chess engine built for extensibility. Featuring a polished UI and custom strategy arrows, designed as a playground for unorthodox rules and experimental game modes. Work in Progress.
+A modular, vanilla JS chess engine built for extensibility. Featuring a polished UI and custom strategy arrows, designed as a playground for unorthodox rules and experimental game modes.
 
 Project Status: Work in Progress (WIP)
 This engine is currently in active development. While the core game is functional, the modular framework is being built out to allow for seamless rule-set toggling and the introduction of unique game modes.
