@@ -72,12 +72,6 @@ const BoardRenderer = {
     },
 
     render() {
-        // Check and display game result if game has ended
-        if (GameLogic.gameState) {
-            this.showGameResult();
-            return;
-        }
-
         // Update coordinates whenever we render
         this.renderOutsideCoordinates();
 
@@ -138,6 +132,11 @@ const BoardRenderer = {
         }
 
         if (GameLogic.isPromoting) this.showPromotionUI();
+
+        // Check and display game result if game has ended
+        if (GameLogic.gameState) {
+            this.showGameResult();
+        }
     },
 
     showGameResult() {
