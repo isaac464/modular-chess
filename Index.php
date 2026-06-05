@@ -32,8 +32,6 @@
                     <p class="gamemode-description">Free placement mode. Place pieces anywhere on the board to create custom positions.</p>
                 </div>
             </div>
-
-            <p class="gamemode-footer">click to select a mode • Press back to return</p>
         </div>
     </div>
 
