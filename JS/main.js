@@ -79,6 +79,7 @@ const AnalysisManager = {
 const GamemodeManager = {
     currentMode: null,
     currentSettings: null,
+    currentGameType: null,
     // Track selected settings for current game
     activeSettings: {
         autoFlip: false,
@@ -184,6 +185,31 @@ const GamemodeManager = {
             });
         });
 
+        // Game type card selection
+        const gameTypeCards = document.querySelectorAll('.game-type-card');
+        gameTypeCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                const type = card.dataset.type;
+                this.selectGameType(type);
+            });
+        });
+
+        // Game type back button
+        const gameTypeBackBtn = document.getElementById('game-type-back-btn');
+        if (gameTypeBackBtn) {
+            gameTypeBackBtn.addEventListener('click', () => {
+                this.closeGameTypeScreen();
+            });
+        }
+
+        // WIP close button
+        const wipCloseBtn = document.getElementById('wip-close-btn');
+        if (wipCloseBtn) {
+            wipCloseBtn.addEventListener('click', () => {
+                this.closeWipDialog();
+            });
+        }
+
         // Back button
         const backButton = document.getElementById('back-button');
         if (backButton) {
@@ -253,24 +279,106 @@ const GamemodeManager = {
         this.currentSettings = JSON.parse(JSON.stringify(this.gamemodes[mode].engineSettings));
         console.log(`Selected gamemode: ${mode}`, this.currentSettings);
 
-        this.showSettings(mode);
+        // For classic mode, show game type selection
+        if (mode === 'classic') {
+            this.showGameTypeScreen();
+        } else {
+            // For other modes, go directly to settings
+            this.showSettings(mode);
+        }
+    },
+
+    showGameTypeScreen() {
+        const gamemodeScreen = document.getElementById('gamemode-screen');
+        const gameTypeScreen = document.getElementById('game-type-screen');
+
+        if (gamemodeScreen && gameTypeScreen) {
+            gamemodeScreen.classList.add('hidden');
+            gameTypeScreen.classList.remove('hidden');
+        }
+    },
+
+    closeGameTypeScreen() {
+        const gamemodeScreen = document.getElementById('gamemode-screen');
+        const gameTypeScreen = document.getElementById('game-type-screen');
+
+        if (gamemodeScreen && gameTypeScreen) {
+            gameTypeScreen.classList.add('hidden');
+            gamemodeScreen.classList.remove('hidden');
+
+            // Reset current mode and game type
+            this.currentMode = null;
+            this.currentSettings = null;
+            this.currentGameType = null;
+        }
+    },
+
+    selectGameType(type) {
+        if (type === 'multiplayer') {
+            this.showMultiplayerWip();
+        } else {
+            // Store the current game type
+            this.currentGameType = type;
+            
+            // Apply game type to active settings
+            if (type === 'local') {
+                this.activeSettings.botDifficulty = 'none';
+            } else if (type === 'bot') {
+                this.activeSettings.botDifficulty = 'medium'; // Default difficulty
+            }
+
+            // Show settings screen
+            this.showSettings(this.currentMode);
+        }
+    },
+
+    showMultiplayerWip() {
+        const wipDialog = document.getElementById('multiplayer-wip-dialog');
+        if (wipDialog) {
+            wipDialog.classList.remove('hidden');
+        }
+    },
+
+    closeWipDialog() {
+        const wipDialog = document.getElementById('multiplayer-wip-dialog');
+        if (wipDialog) {
+            wipDialog.classList.add('hidden');
+        }
     },
 
     showSettings(mode) {
         const gamemodeScreen = document.getElementById('gamemode-screen');
+        const gameTypeScreen = document.getElementById('game-type-screen');
         const settingsScreen = document.getElementById('settings-screen');
         const settingsTitle = document.getElementById('settings-title');
         const settingsSubtitle = document.getElementById('settings-subtitle');
         const settingsContent = document.getElementById('settings-content');
 
-        if (gamemodeScreen && settingsScreen) {
+        if (settingsScreen) {
             const config = this.gamemodes[mode];
             settingsTitle.textContent = `${config.name} Settings`;
             settingsSubtitle.textContent = config.description;
 
+            // Filter settings based on game type for classic mode
+            let settingsToShow = config.availableSettings;
+            if (mode === 'classic' && this.currentGameType) {
+                if (this.currentGameType === 'local') {
+                    // Local: only show auto-flip
+                    settingsToShow = config.availableSettings.filter(s => s.id === 'auto-flip');
+                } else if (this.currentGameType === 'bot') {
+                    // Vs Bot: only show bot difficulty (without Human option)
+                    settingsToShow = config.availableSettings.filter(s => s.id === 'bot-difficulty');
+                    // Remove 'none' option from bot difficulty
+                    settingsToShow = settingsToShow.map(setting => ({
+                        ...setting,
+                        options: setting.options.filter(opt => opt.value !== 'none')
+                    }));
+                }
+            }
+
             // Dynamically generate settings HTML
             settingsContent.innerHTML = '';
-            config.availableSettings.forEach(setting => {
+            settingsToShow.forEach(setting => {
                 const group = document.createElement('div');
                 group.className = 'settings-group';
 
@@ -301,41 +409,40 @@ const GamemodeManager = {
                 settingsContent.appendChild(group);
             });
 
-            gamemodeScreen.classList.add('hidden');
-            settingsScreen.classList.remove('hidden');
-
-            // Handle Classic mode specific constraints: Disable auto-flip if bot is selected
-            if (mode === 'classic') {
-                const botSelect = document.getElementById('setting-bot-difficulty');
-                const autoFlipGroup = document.getElementById('setting-auto-flip').closest('.settings-group');
-                const autoFlipCheckbox = document.getElementById('setting-auto-flip');
-
-                const updateAutoFlipVisibility = () => {
-                    if (botSelect.value !== 'none') {
-                        autoFlipGroup.style.display = 'none';
-                        autoFlipCheckbox.checked = false;
-                    } else {
-                        autoFlipGroup.style.display = 'block';
-                    }
-                };
-
-                botSelect.addEventListener('change', updateAutoFlipVisibility);
-                updateAutoFlipVisibility(); // Initial check
+            // Hide appropriate screens
+            if (mode === 'classic' && this.currentGameType) {
+                // Coming from game type screen
+                if (gameTypeScreen) gameTypeScreen.classList.add('hidden');
+            } else {
+                // Coming from gamemode screen
+                if (gamemodeScreen) gamemodeScreen.classList.add('hidden');
             }
+            settingsScreen.classList.remove('hidden');
         }
     },
 
     closeSettings() {
         const gamemodeScreen = document.getElementById('gamemode-screen');
+        const gameTypeScreen = document.getElementById('game-type-screen');
         const settingsScreen = document.getElementById('settings-screen');
 
-        if (gamemodeScreen && settingsScreen) {
+        if (settingsScreen) {
             settingsScreen.classList.add('hidden');
-            gamemodeScreen.classList.remove('hidden');
-
-            // Reset current mode
-            this.currentMode = null;
-            this.currentSettings = null;
+            
+            // If in classic mode with game type selected, return to game type screen
+            if (this.currentMode === 'classic' && this.currentGameType) {
+                if (gameTypeScreen) {
+                    gameTypeScreen.classList.remove('hidden');
+                }
+            } else {
+                // Otherwise return to gamemode screen
+                if (gamemodeScreen) {
+                    gamemodeScreen.classList.remove('hidden');
+                }
+                // Reset current mode when returning to gamemode screen
+                this.currentMode = null;
+                this.currentSettings = null;
+            }
         }
     },
 
@@ -514,6 +621,7 @@ const GamemodeManager = {
             // Reset current mode and settings
             this.currentMode = null;
             this.currentSettings = null;
+            this.currentGameType = null;
 
             // Reset active settings
             this.activeSettings = {

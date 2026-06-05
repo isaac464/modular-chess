@@ -35,6 +35,52 @@
         </div>
     </div>
 
+    <!-- Game Type Selection Screen -->
+    <div id="game-type-screen" class="game-type-screen hidden">
+        <div class="game-type-container">
+            <button id="game-type-back-btn" class="game-type-back-btn">← Back</button>
+            <div class="game-type-header">
+                <h1 class="game-type-title">Select Game Type</h1>
+                <p class="game-type-subtitle">Choose how you want to play</p>
+            </div>
+
+            <div class="game-types-grid">
+                <!-- Local Game -->
+                <div class="game-type-card" data-type="local">
+                    <div class="game-type-icon">👥</div>
+                    <h2 class="game-type-name">Local</h2>
+                    <p class="game-type-description">Play against another player on the same device.</p>
+                </div>
+
+                <!-- Vs Bot -->
+                <div class="game-type-card" data-type="bot">
+                    <div class="game-type-icon">🤖</div>
+                    <h2 class="game-type-name">Vs Bot</h2>
+                    <p class="game-type-description">Challenge the AI opponent and test your skills.</p>
+                </div>
+
+                <!-- Multiplayer -->
+                <div class="game-type-card" data-type="multiplayer">
+                    <div class="game-type-lock-overlay">🔒</div>
+                    <div class="game-type-icon">🌐</div>
+                    <h2 class="game-type-name">Multiplayer</h2>
+                    <p class="game-type-description">Play against opponents online.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multiplayer WIP Dialog -->
+    <div id="multiplayer-wip-dialog" class="confirmation-dialog hidden">
+        <div class="confirmation-content">
+            <h2 class="confirmation-title">Work In Progress</h2>
+            <p class="confirmation-message">Multiplayer is not available in this version. This feature is coming soon!</p>
+            <div class="confirmation-buttons">
+                <button id="wip-close-btn" class="confirm-btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Exit Match Confirmation Dialog -->
     <div id="exit-confirmation-dialog" class="confirmation-dialog hidden">
         <div class="confirmation-content">
