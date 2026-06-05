@@ -1,3 +1,80 @@
+// Analysis Manager
+const AnalysisManager = {
+    isAnalyzing: false,
+    currentIndex: -1,
+    history: [],
+
+    init() {
+        this.setupEventListeners();
+    },
+
+    setupEventListeners() {
+        const firstBtn = document.getElementById('analysis-first');
+        const prevBtn = document.getElementById('analysis-prev');
+        const nextBtn = document.getElementById('analysis-next');
+        const lastBtn = document.getElementById('analysis-last');
+        const exitBtn = document.getElementById('analysis-exit-btn');
+
+        if (firstBtn) firstBtn.addEventListener('click', () => this.goToMove(-1));
+        if (prevBtn) prevBtn.addEventListener('click', () => this.goToMove(this.currentIndex - 1));
+        if (nextBtn) nextBtn.addEventListener('click', () => this.goToMove(this.currentIndex + 1));
+        if (lastBtn) lastBtn.addEventListener('click', () => this.goToMove(this.history.length - 1));
+        if (exitBtn) exitBtn.addEventListener('click', () => this.exitAnalysis());
+    },
+
+    startAnalysis() {
+        this.isAnalyzing = true;
+        // history[0] = initial state
+        // history[1...n] = states after moveLog[0...n-1]
+        this.history = [...GameLogic.moveHistory, GameLogic.getGameStateSnapshot()];
+
+        // currentIndex = index into GameLogic.moveLog
+        // Initial state is index -1, first move is index 0, last move is moveLog.length - 1
+        this.currentIndex = GameLogic.moveLog.length - 1;
+
+        const gameResultDiv = document.getElementById('game-result');
+        if (gameResultDiv) {
+            gameResultDiv.style.display = 'none';
+        }
+
+        document.getElementById('game-controls').classList.add('hidden');
+        document.getElementById('analysis-controls').classList.remove('hidden');
+
+        BoardRenderer.render();
+    },
+
+    exitAnalysis() {
+        this.isAnalyzing = false;
+        document.getElementById('game-controls').classList.remove('hidden');
+        document.getElementById('analysis-controls').classList.add('hidden');
+
+        const gameResultDiv = document.getElementById('game-result');
+        if (gameResultDiv) {
+            gameResultDiv.style.display = '';
+        }
+
+        BoardRenderer.render();
+    },
+
+    goToMove(index) {
+        if (index < -1 || index >= GameLogic.moveLog.length) return;
+        this.currentIndex = index;
+        BoardRenderer.render();
+    },
+
+    getCurrentBoard() {
+        // Safe access: history[0] exists, and history[index+1] exists if index < moveLog.length
+        const state = this.history[this.currentIndex + 1];
+        return state ? state.boardState : this.history[0].boardState;
+    },
+
+    getCurrentLastMove() {
+        if (this.currentIndex === -1) return null;
+        const state = this.history[this.currentIndex + 1];
+        return state ? state.lastMove : null;
+    }
+};
+
 // Gamemode Manager
 const GamemodeManager = {
     currentMode: null,
@@ -94,6 +171,7 @@ const GamemodeManager = {
 
     init() {
         this.setupEventListeners();
+        AnalysisManager.init();
     },
 
     setupEventListeners() {
@@ -143,6 +221,14 @@ const GamemodeManager = {
         if (settingsStartBtn) {
             settingsStartBtn.addEventListener('click', () => {
                 this.startGameFromSettings();
+            });
+        }
+
+        // Undo button
+        const undoBtn = document.getElementById('undo-btn');
+        if (undoBtn) {
+            undoBtn.addEventListener('click', () => {
+                this.undoLastMove();
             });
         }
 
@@ -217,6 +303,25 @@ const GamemodeManager = {
 
             gamemodeScreen.classList.add('hidden');
             settingsScreen.classList.remove('hidden');
+
+            // Handle Classic mode specific constraints: Disable auto-flip if bot is selected
+            if (mode === 'classic') {
+                const botSelect = document.getElementById('setting-bot-difficulty');
+                const autoFlipGroup = document.getElementById('setting-auto-flip').closest('.settings-group');
+                const autoFlipCheckbox = document.getElementById('setting-auto-flip');
+
+                const updateAutoFlipVisibility = () => {
+                    if (botSelect.value !== 'none') {
+                        autoFlipGroup.style.display = 'none';
+                        autoFlipCheckbox.checked = false;
+                    } else {
+                        autoFlipGroup.style.display = 'block';
+                    }
+                };
+
+                botSelect.addEventListener('change', updateAutoFlipVisibility);
+                updateAutoFlipVisibility(); // Initial check
+            }
         }
     },
 
@@ -251,6 +356,11 @@ const GamemodeManager = {
                 }
             }
         });
+
+        // Enforce constraints
+        if (this.currentMode === 'classic' && this.activeSettings.botDifficulty !== 'none') {
+            this.activeSettings.autoFlip = false;
+        }
 
         // Handle board initialization based on settings
         if (this.activeSettings.emptyBoard) {
@@ -335,6 +445,29 @@ const GamemodeManager = {
             await ChessBot.makeMove(this.activeSettings.botDifficulty, 'black');
             console.log("Bot move completed");
         }
+    },
+
+    undoLastMove() {
+        if (GameLogic.isPromoting) return;
+
+        // In human vs bot, we want to undo both the bot's move and the player's last move
+        if (this.activeSettings.botDifficulty !== 'none') {
+            // If it's currently human's turn, bot just moved, so undo two steps (bot's and player's)
+            // If it's currently bot's turn (waiting for bot), just undo one (player's)
+            if (GameLogic.turn === 'white') {
+                GameLogic.undoMove();
+                GameLogic.undoMove();
+            } else {
+                GameLogic.undoMove();
+            }
+        } else {
+            // In human vs human, just undo one move
+            GameLogic.undoMove();
+        }
+
+        // Prevent animation on undo
+        BoardRenderer.lastMoveProcessed = GameLogic.lastMove;
+        BoardRenderer.render();
     },
 
     applyGamemodeSettings() {
