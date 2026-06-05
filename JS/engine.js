@@ -20,6 +20,9 @@ const GameLogic = {
     sandboxFreeMovementEnabled: true,
     perspective: 'white',
     autoFlip: false,
+    gameState: null, // 'white-won', 'black-won', 'draw', or null
+    moveHistory: [], // Track board positions for repetition detection
+    lastMove: null, // Track last move for highlighting {fromRow, fromCol, toRow, toCol}
 
     getPieceAt(row, col) { return this.boardState[row][col]; },
 
@@ -41,6 +44,9 @@ const GameLogic = {
         this.promotionSquare = null;
         this.hasMoved = { wK: false, wR_left: false, wR_right: false, bK: false, bR_left: false, bR_right: false };
         this.perspective = 'white';
+        this.gameState = null;
+        this.moveHistory = [];
+        this.lastMove = null;
     },
 
     clearBoard() {
@@ -60,6 +66,9 @@ const GameLogic = {
         this.isPromoting = false;
         this.promotionSquare = null;
         this.hasMoved = { wK: false, wR_left: false, wR_right: false, bK: false, bR_left: false, bR_right: false };
+        this.gameState = null;
+        this.moveHistory = [];
+        this.lastMove = null;
     },
 
     isInCheck(color, customBoard = this.boardState) {
@@ -109,6 +118,12 @@ const GameLogic = {
 
         const piece = this.boardState[fromRow][fromCol];
 
+        // Add current position to history before making move
+        this.moveHistory.push(this.getBoardString());
+
+        // Store the move for highlighting
+        this.lastMove = { fromRow, fromCol, toRow, toCol };
+
         // 1. Execute Special Moves (Castling/En Passant)
         if (piece[1] === 'K' && Math.abs(toCol - fromCol) === 2) {
             const isKingside = toCol > fromCol;
@@ -148,15 +163,20 @@ const GameLogic = {
 
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
+        this.checkGameState();
         return true;
     },
 
     promotePawn(type) {
+        // Add position before promotion to history
+        this.moveHistory.push(this.getBoardString());
+        
         const prefix = this.turn === 'white' ? 'w' : 'b';
         this.boardState[this.promotionSquare.row][this.promotionSquare.col] = prefix + type;
         this.isPromoting = false;
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
+        this.checkGameState();
     },
 
     checkMoveIsValid(fR, fC, tR, tC) {
@@ -198,5 +218,80 @@ const GameLogic = {
         }
         
         return PieceMovement.validateBasicMove(fR, fC, tR, tC, this.boardState, this.enPassantTarget);
-    }
+    },
+
+    hasValidMoves(color) {
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const piece = this.boardState[r][c];
+                if (piece === '.' || (piece.startsWith('w') ? 'white' : 'black') !== color) continue;
+                
+                for (let tR = 0; tR < 8; tR++) {
+                    for (let tC = 0; tC < 8; tC++) {
+                        const target = this.getPieceAt(tR, tC);
+                        
+                        // Can't capture own piece
+                        if (target !== '.' && (target.startsWith('w') ? 'white' : 'black') === color) continue;
+                        
+                        // Check if move is valid according to piece movement rules
+                        if (!PieceMovement.validateBasicMove(r, c, tR, tC, this.boardState, this.enPassantTarget)) continue;
+                        
+                        // Simulate the move and check if it leaves the king in check
+                        const simBoard = JSON.parse(JSON.stringify(this.boardState));
+                        const movingPiece = simBoard[r][c];
+                        
+                        // Handle en passant in simulation
+                        if (movingPiece[1] === 'P' && this.enPassantTarget && tR === this.enPassantTarget.row && tC === this.enPassantTarget.col) {
+                            const victimRow = movingPiece.startsWith('w') ? tR + 1 : tR - 1;
+                            simBoard[victimRow][tC] = '.';
+                        }
+                        
+                        simBoard[tR][tC] = movingPiece;
+                        simBoard[r][c] = '.';
+                        
+                        if (!this.isInCheck(color, simBoard)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    },
+
+    checkGameState() {
+        if (this.gameState) return; // Game already ended
+
+        // Check for threefold repetition
+        if (this.checkThreefoldRepetition()) {
+            this.gameState = 'draw';
+            return;
+        }
+
+        const isInCheck = this.isInCheck(this.turn);
+        const hasValidMoves = this.hasValidMoves(this.turn);
+
+        if (!hasValidMoves) {
+            if (isInCheck) {
+                // Checkmate
+                this.gameState = this.turn === 'white' ? 'black-won' : 'white-won';
+            } else {
+                // Stalemate (draw)
+                this.gameState = 'draw';
+            }
+        }
+    },
+
+    getBoardString() {
+        return JSON.stringify(this.boardState) + '|' + this.turn + '|' + JSON.stringify(this.enPassantTarget);
+    },
+
+    checkThreefoldRepetition() {
+        const currentBoard = this.getBoardString();
+        let count = 0;
+        for (let i = 0; i < this.moveHistory.length; i++) {
+            if (this.moveHistory[i] === currentBoard) count++;
+        }
+        return count >= 2; // 2 in history + current = 3 total
+    },
 };

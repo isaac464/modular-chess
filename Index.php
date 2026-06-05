@@ -85,6 +85,13 @@
 
             <div id="bottom-coordinates" class="coordinates horizontal"></div>
         </div>
+
+        <div id="game-result" class="game-result hidden">
+            <div class="result-content">
+                <h1 id="result-title" class="result-title">White Won</h1>
+                <button id="result-menu-btn" class="result-button">Return to Menu</button>
+            </div>
+        </div>
     </div>
 
     <script src="JS/pieces.js"></script>
