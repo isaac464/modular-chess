@@ -323,6 +323,7 @@ const GamemodeManager = {
         const settingsScreen = document.getElementById('settings-screen');
         const boardScreen = document.getElementById('board-screen');
         const confirmDialog = document.getElementById('exit-confirmation-dialog');
+        const gameResultDiv = document.getElementById('game-result');
 
         if (gamemodeScreen && boardScreen) {
             // Reset board before hiding
@@ -330,7 +331,8 @@ const GamemodeManager = {
 
             boardScreen.classList.add('hidden');
             if (settingsScreen) settingsScreen.classList.add('hidden');
-            confirmDialog.classList.add('hidden');
+            if (confirmDialog) confirmDialog.classList.add('hidden');
+            if (gameResultDiv) gameResultDiv.classList.add('hidden');
             gamemodeScreen.classList.remove('hidden');
 
             // Reset gamemode settings

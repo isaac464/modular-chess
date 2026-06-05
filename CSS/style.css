@@ -92,6 +92,7 @@ html, body {
 .white { background-color: #f0d9b5; }
 .black { background-color: #b58863; }
 .selected { background-color: #7b945d !important; }
+.last-move { background-color: #baca44 !important; }
 
 .hidden { display: none !important; }
 
@@ -153,3 +154,53 @@ html, body {
     cursor: pointer;
     accent-color: #e74c3c;
 }
+
+/* Game Result Overlay */
+.game-result {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.game-result.hidden {
+    display: none !important;
+}
+
+.result-content {
+    background: #2c2c2c;
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    border: 2px solid #444;
+}
+
+.result-title {
+    color: #fff;
+    font-size: 48px;
+    margin: 0 0 30px 0;
+    font-weight: bold;
+}
+
+.result-button {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.result-button:hover {
+    background: #c0392b;
+}
+

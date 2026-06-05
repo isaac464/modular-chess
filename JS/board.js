@@ -13,8 +13,18 @@ const BoardRenderer = {
     init() {
         this.svgContainer = document.getElementById('arrow-svg');
         this.setupGlobalListeners();
+        this.setupResultButtonListener();
         this.renderOutsideCoordinates();
         this.render();
+    },
+
+    setupResultButtonListener() {
+        const resultMenuBtn = document.getElementById('result-menu-btn');
+        if (resultMenuBtn) {
+            resultMenuBtn.addEventListener('click', () => {
+                GamemodeManager.returnToMenu();
+            });
+        }
     },
 
     setupGlobalListeners() {
@@ -62,6 +72,12 @@ const BoardRenderer = {
     },
 
     render() {
+        // Check and display game result if game has ended
+        if (GameLogic.gameState) {
+            this.showGameResult();
+            return;
+        }
+
         // Update coordinates whenever we render
         this.renderOutsideCoordinates();
 
@@ -82,6 +98,10 @@ const BoardRenderer = {
 
                 if (GameLogic.selectedSquare && GameLogic.selectedSquare.row === row && GameLogic.selectedSquare.col === col) {
                     colorClass = 'selected';
+                } else if (GameLogic.lastMove && 
+                           ((GameLogic.lastMove.fromRow === row && GameLogic.lastMove.fromCol === col) || 
+                            (GameLogic.lastMove.toRow === row && GameLogic.lastMove.toCol === col))) {
+                    colorClass = 'last-move';
                 }
 
                 square.className = `square ${colorClass}`;
@@ -118,6 +138,23 @@ const BoardRenderer = {
         }
 
         if (GameLogic.isPromoting) this.showPromotionUI();
+    },
+
+    showGameResult() {
+        const resultDiv = document.getElementById('game-result');
+        const resultTitle = document.getElementById('result-title');
+        
+        if (resultDiv && resultTitle) {
+            if (GameLogic.gameState === 'white-won') {
+                resultTitle.textContent = 'White Won';
+            } else if (GameLogic.gameState === 'black-won') {
+                resultTitle.textContent = 'Black Won';
+            } else if (GameLogic.gameState === 'draw') {
+                resultTitle.textContent = 'Draw';
+            }
+            
+            resultDiv.classList.remove('hidden');
+        }
     },
 
     handleSquareClick(row, col) {
