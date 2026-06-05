@@ -148,7 +148,7 @@
     align-items: center;
     justify-content: flex-start;
     position: relative;
-    padding-top: 80px; /* Space for header */
+    padding-top: 100px; /* Space for header */
     box-sizing: border-box;
 }
 
@@ -160,7 +160,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px;
+    padding: 10px 20px;
     background-color: #1a1a1a;
     border-bottom: 1px solid #333;
     width: 100%;
@@ -228,17 +228,7 @@
 }
 
 /* Responsive Design */
-@media (max-width: 950px) {
-    :root {
-        --square-size: 60px;
-    }
-}
-
-@media (max-width: 768px) {
-    :root {
-        --square-size: 45px;
-    }
-
+@media (max-width: 1000px) {
     .gamemode-title {
         font-size: 2.5em;
     }
@@ -287,10 +277,6 @@
 @media (max-width: 480px) {
     .board-screen {
         padding-top: 160px;
-    }
-
-    :root {
-        --square-size: 35px;
     }
 }
 

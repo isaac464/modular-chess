@@ -14,18 +14,18 @@ html, body {
 }
 
 :root {
-    --square-size: 80px;
+    --square-size: clamp(25px, 8vmin, 80px);
     --board-size: calc(var(--square-size) * 8);
-    --coordinate-size: 30px;
+    --coordinate-size: clamp(15px, 3vmin, 30px);
 }
 
 .game-container {
     display: flex;
     gap: 20px;
-    align-items: flex-start;
+    align-items: center;
     flex-wrap: wrap;
     justify-content: center;
-    padding: 20px;
+    padding: 10px;
     max-width: 100%;
 }
 
@@ -60,7 +60,7 @@ html, body {
 
 .side-panel {
     width: 250px;
-    height: calc(var(--board-size) + var(--coordinate-size) + 20px);
+    max-height: calc(var(--board-size) + var(--coordinate-size) + 20px);
     background-color: #262421;
     border-radius: 4px;
     display: flex;
@@ -192,7 +192,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: calc(var(--square-size) * 0.6875);
+    font-size: calc(var(--square-size) * 0.7);
     cursor: pointer;
     user-select: none;
     position: relative;
@@ -206,13 +206,13 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: calc(var(--square-size) * 0.6875);
+    font-size: calc(var(--square-size) * 0.7);
     transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
     pointer-events: none;
     z-index: 5;
 }
 
-@media (max-width: 950px) {
+@media (max-width: 1000px) {
     .side-panel {
         width: 100%;
         max-width: var(--board-size);
