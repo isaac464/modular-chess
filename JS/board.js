@@ -152,8 +152,9 @@ const BoardRenderer = {
                         const toR = isWhitePerspective ? GameLogic.lastMove.toRow : 7 - GameLogic.lastMove.toRow;
                         const toC = isWhitePerspective ? GameLogic.lastMove.toCol : 7 - GameLogic.lastMove.toCol;
 
-                        const dx = (fromC - toC) * 80;
-                        const dy = (fromR - toR) * 80;
+                        const squareSize = this.container.offsetWidth / 8;
+                        const dx = (fromC - toC) * squareSize;
+                        const dy = (fromR - toR) * squareSize;
 
                         pieceSpan.style.transition = 'none';
                         pieceSpan.style.transform = `translate(${dx}px, ${dy}px)`;
@@ -204,8 +205,9 @@ const BoardRenderer = {
                 capR = isWhitePerspective ? victimRow : 7 - victimRow;
             }
 
-            capturedPieceElem.style.left = (capC * 80) + 'px';
-            capturedPieceElem.style.top = (capR * 80) + 'px';
+            const squareSize = this.container.offsetWidth / 8;
+            capturedPieceElem.style.left = (capC * squareSize) + 'px';
+            capturedPieceElem.style.top = (capR * squareSize) + 'px';
             capturedPieceElem.style.transition = 'opacity 0.2s ease-out, transform 0.2s ease-out';
             this.container.appendChild(capturedPieceElem);
 
@@ -369,7 +371,7 @@ const BoardRenderer = {
         const oldArrows = this.svgContainer.querySelectorAll('polyline');
         oldArrows.forEach(a => a.remove());
 
-        const squareSize = 80;
+        const squareSize = this.container.offsetWidth / 8;
         const isWhitePerspective = GameLogic.perspective === 'white';
 
         this.arrows.forEach(arrow => {

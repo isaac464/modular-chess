@@ -3,19 +3,30 @@ html, body {
     margin: 0;
     padding: 0;
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: #222;
     font-family: sans-serif;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+:root {
+    --square-size: 80px;
+    --board-size: calc(var(--square-size) * 8);
+    --coordinate-size: 30px;
 }
 
 .game-container {
     display: flex;
     gap: 20px;
     align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 20px;
+    max-width: 100%;
 }
 
 /* The Container uses CSS Grid to create a 2x2 layout:
@@ -26,8 +37,8 @@ html, body {
 */
 .board-wrapper {
     display: grid;
-    grid-template-columns: 30px 640px; /* 30px for labels, 640px for board */
-    grid-template-rows: 640px 30px;    /* 640px for board, 30px for labels */
+    grid-template-columns: var(--coordinate-size) var(--board-size);
+    grid-template-rows: var(--board-size) var(--coordinate-size);
     background-color: #312e2b;         /* Dark grey padding background */
     padding: 10px;
     border-radius: 4px;
@@ -41,15 +52,15 @@ html, body {
     grid-row: 1;
     position: relative;
     display: grid;
-    grid-template-columns: repeat(8, 80px);
-    grid-template-rows: repeat(8, 80px);
-    width: 640px;
-    height: 640px;
+    grid-template-columns: repeat(8, var(--square-size));
+    grid-template-rows: repeat(8, var(--square-size));
+    width: var(--board-size);
+    height: var(--board-size);
 }
 
 .side-panel {
     width: 250px;
-    height: 690px; /* Matches board height + labels + padding approx */
+    height: calc(var(--board-size) + var(--coordinate-size) + 20px);
     background-color: #262421;
     border-radius: 4px;
     display: flex;
@@ -154,7 +165,7 @@ html, body {
 }
 
 .coordinates.vertical span {
-    height: 80px; /* Matches square height */
+    height: var(--square-size); /* Matches square height */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -168,7 +179,7 @@ html, body {
 }
 
 .coordinates.horizontal span {
-    width: 80px; /* Matches square width */
+    width: var(--square-size); /* Matches square width */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -176,12 +187,12 @@ html, body {
 
 /* Square Styling */
 .square {
-    width: 80px;
-    height: 80px;
+    width: var(--square-size);
+    height: var(--square-size);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 55px;
+    font-size: calc(var(--square-size) * 0.6875);
     cursor: pointer;
     user-select: none;
     position: relative;
@@ -190,15 +201,24 @@ html, body {
 /* Piece Animation */
 .piece {
     position: absolute;
-    width: 80px;
-    height: 80px;
+    width: var(--square-size);
+    height: var(--square-size);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 55px;
+    font-size: calc(var(--square-size) * 0.6875);
     transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
     pointer-events: none;
     z-index: 5;
+}
+
+@media (max-width: 950px) {
+    .side-panel {
+        width: 100%;
+        max-width: var(--board-size);
+        height: auto;
+        min-height: 200px;
+    }
 }
 
 .white { background-color: #f0d9b5; }
