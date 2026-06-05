@@ -74,7 +74,7 @@ const GameLogic = {
         this.lastMove = null;
     },
 
-    isInCheck(color, customBoard = this.boardState) {
+    isInCheck(color, customBoard = this.boardState, enPassant = this.enPassantTarget) {
         const kingChar = color === 'white' ? 'wK' : 'bK';
         let kingPos = null;
         for (let r = 0; r < 8; r++) {
@@ -82,15 +82,15 @@ const GameLogic = {
                 if (customBoard[r][c] === kingChar) { kingPos = { r, c }; break; }
             }
         }
-        return kingPos ? this.isSquareAttacked(kingPos.r, kingPos.c, color === 'white' ? 'black' : 'white', customBoard) : false;
+        return kingPos ? this.isSquareAttacked(kingPos.r, kingPos.c, color === 'white' ? 'black' : 'white', customBoard, enPassant) : false;
     },
 
-    isSquareAttacked(row, col, attackerColor, customBoard = this.boardState) {
+    isSquareAttacked(row, col, attackerColor, customBoard = this.boardState, enPassant = this.enPassantTarget) {
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const piece = customBoard[r][c];
                 if (piece !== '.' && (piece.startsWith('w') ? 'white' : 'black') === attackerColor) {
-                    if (PieceMovement.validateBasicMove(r, c, row, col, customBoard, this.enPassantTarget)) return true;
+                    if (PieceMovement.validateBasicMove(r, c, row, col, customBoard, enPassant)) return true;
                 }
             }
         }
@@ -98,18 +98,7 @@ const GameLogic = {
     },
 
     wouldBeInCheck(fR, fC, tR, tC) {
-        const simBoard = JSON.parse(JSON.stringify(this.boardState));
-        const piece = simBoard[fR][fC];
-
-        // Handle En Passant in simulation
-        if (piece[1] === 'P' && this.enPassantTarget && tR === this.enPassantTarget.row && tC === this.enPassantTarget.col) {
-            const victimRow = piece.startsWith('w') ? tR + 1 : tR - 1;
-            simBoard[victimRow][tC] = '.';
-        }
-
-        simBoard[tR][tC] = piece;
-        simBoard[fR][fC] = '.';
-        return this.isInCheck(piece.startsWith('w') ? 'white' : 'black', simBoard);
+        return this.wouldBeInCheckSim(fR, fC, tR, tC, this.boardState, this.turn, this.enPassantTarget);
     },
 
     movePiece(fromRow, fromCol, toRow, toCol) {
@@ -223,7 +212,7 @@ const GameLogic = {
 
         if (piece[1] === 'K' && Math.abs(tC - fC) === 2) {
             const kingMoved = turn === 'white' ? hasMoved.wK : hasMoved.bK;
-            if (kingMoved || this.isInCheck(turn, board)) return false;
+            if (kingMoved || this.isInCheck(turn, board, enPassant)) return false;
 
             const kingside = tC > fC;
             if (turn === 'white') {
@@ -236,7 +225,7 @@ const GameLogic = {
 
             const path = kingside ? [5, 6] : [1, 2, 3];
             for (let col of path) {
-                if (board[fR][col] !== '.' || this.isSquareAttacked(fR, col, turn === 'white' ? 'black' : 'white', board)) return false;
+                if (board[fR][col] !== '.' || this.isSquareAttacked(fR, col, turn === 'white' ? 'black' : 'white', board, enPassant)) return false;
             }
             return true;
         }
@@ -271,17 +260,29 @@ const GameLogic = {
     },
 
     wouldBeInCheckSim(fR, fC, tR, tC, board, color, enPassant) {
-        const simBoard = JSON.parse(JSON.stringify(board));
-        const piece = simBoard[fR][fC];
+        const piece = board[fR][fC];
+        const target = board[tR][tC];
+        let victimRow, victimPiece;
+        const isEnPassant = piece[1] === 'P' && enPassant && tR === enPassant.row && tC === enPassant.col;
 
-        if (piece[1] === 'P' && enPassant && tR === enPassant.row && tC === enPassant.col) {
-            const victimRow = piece.startsWith('w') ? tR + 1 : tR - 1;
-            simBoard[victimRow][tC] = '.';
+        if (isEnPassant) {
+            victimRow = piece.startsWith('w') ? tR + 1 : tR - 1;
+            victimPiece = board[victimRow][tC];
+            board[victimRow][tC] = '.';
         }
 
-        simBoard[tR][tC] = piece;
-        simBoard[fR][fC] = '.';
-        return this.isInCheck(color, simBoard);
+        board[tR][tC] = piece;
+        board[fR][fC] = '.';
+
+        const inCheck = this.isInCheck(color, board, enPassant);
+
+        board[fR][fC] = piece;
+        board[tR][tC] = target;
+        if (isEnPassant) {
+            board[victimRow][tC] = victimPiece;
+        }
+
+        return inCheck;
     },
 
     hasValidMoves(color) {
