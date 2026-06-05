@@ -3,13 +3,30 @@ html, body {
     margin: 0;
     padding: 0;
     width: 100%;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     background-color: #222;
     font-family: sans-serif;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+:root {
+    --square-size: clamp(25px, 8vmin, 80px);
+    --board-size: calc(var(--square-size) * 8);
+    --coordinate-size: clamp(15px, 3vmin, 30px);
+}
+
+.game-container {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 10px;
+    max-width: 100%;
 }
 
 /* The Container uses CSS Grid to create a 2x2 layout:
@@ -20,12 +37,13 @@ html, body {
 */
 .board-wrapper {
     display: grid;
-    grid-template-columns: 30px 640px; /* 30px for labels, 640px for board */
-    grid-template-rows: 640px 30px;    /* 640px for board, 30px for labels */
+    grid-template-columns: var(--coordinate-size) var(--board-size);
+    grid-template-rows: var(--board-size) var(--coordinate-size);
     background-color: #312e2b;         /* Dark grey padding background */
     padding: 10px;
     border-radius: 4px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    position: relative;
 }
 
 /* The actual board grid */
@@ -34,10 +52,100 @@ html, body {
     grid-row: 1;
     position: relative;
     display: grid;
-    grid-template-columns: repeat(8, 80px);
-    grid-template-rows: repeat(8, 80px);
-    width: 640px;
-    height: 640px;
+    grid-template-columns: repeat(8, var(--square-size));
+    grid-template-rows: repeat(8, var(--square-size));
+    width: var(--board-size);
+    height: var(--board-size);
+}
+
+.side-panel {
+    width: 250px;
+    max-height: calc(var(--board-size) + var(--coordinate-size) + 20px);
+    background-color: #262421;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    box-sizing: border-box;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.side-panel-title {
+    color: #bababa;
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+    text-align: center;
+    border-bottom: 1px solid #3d3b38;
+    padding-bottom: 10px;
+}
+
+.move-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    color: #bdc3c7;
+    font-family: monospace;
+    font-size: 1.1em;
+    padding: 5px;
+}
+
+.move-row {
+    display: grid;
+    grid-template-columns: 30px 1fr 1fr;
+    padding: 5px 0;
+    border-bottom: 1px solid #3d3b38;
+}
+
+.move-number {
+    color: #777;
+}
+
+.side-panel-controls {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.side-panel-controls button {
+    flex-grow: 1;
+}
+
+.analysis-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.nav-btn {
+    flex: 1;
+    background: #444;
+    color: white;
+    border: 1px solid #555;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.2em;
+    transition: background 0.2s;
+}
+
+.nav-btn:hover {
+    background: #555;
+}
+
+.move-list span {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.move-list span:hover {
+    background-color: #3d3b38;
+}
+
+.move-list span.active-move {
+    background-color: #4b4845;
+    color: #fff;
+    font-weight: bold;
 }
 
 /* Coordinates Styling */
@@ -57,7 +165,7 @@ html, body {
 }
 
 .coordinates.vertical span {
-    height: 80px; /* Matches square height */
+    height: var(--square-size); /* Matches square height */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -71,7 +179,7 @@ html, body {
 }
 
 .coordinates.horizontal span {
-    width: 80px; /* Matches square width */
+    width: var(--square-size); /* Matches square width */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -79,14 +187,38 @@ html, body {
 
 /* Square Styling */
 .square {
-    width: 80px;
-    height: 80px;
+    width: var(--square-size);
+    height: var(--square-size);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 55px;
+    font-size: calc(var(--square-size) * 0.7);
     cursor: pointer;
     user-select: none;
+    position: relative;
+}
+
+/* Piece Animation */
+.piece {
+    position: absolute;
+    width: var(--square-size);
+    height: var(--square-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--square-size) * 0.7);
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@media (max-width: 1000px) {
+    .side-panel {
+        width: 100%;
+        max-width: var(--board-size);
+        height: auto;
+        min-height: 200px;
+    }
 }
 
 .white { background-color: #f0d9b5; }
@@ -189,6 +321,12 @@ html, body {
     font-weight: bold;
 }
 
+.result-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
 .result-button {
     background: #e74c3c;
     color: white;
@@ -204,3 +342,19 @@ html, body {
     background: #c0392b;
 }
 
+.result-button-secondary {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-family: inherit;
+    font-weight: bold;
+}
+
+.result-button-secondary:hover {
+    background: #2980b9;
+}

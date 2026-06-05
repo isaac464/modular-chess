@@ -21,7 +21,8 @@ const GameLogic = {
     perspective: 'white',
     autoFlip: false,
     gameState: null, // 'white-won', 'black-won', 'draw', or null
-    moveHistory: [], // Track board positions for repetition detection
+    moveHistory: [], // Track full game states for undo and repetition detection
+    moveLog: [], // Track moves in notation for UI
     lastMove: null, // Track last move for highlighting {fromRow, fromCol, toRow, toCol}
 
     getPieceAt(row, col) { return this.boardState[row][col]; },
@@ -46,6 +47,7 @@ const GameLogic = {
         this.perspective = 'white';
         this.gameState = null;
         this.moveHistory = [];
+        this.moveLog = [];
         this.lastMove = null;
     },
 
@@ -68,6 +70,7 @@ const GameLogic = {
         this.hasMoved = { wK: false, wR_left: false, wR_right: false, bK: false, bR_left: false, bR_right: false };
         this.gameState = null;
         this.moveHistory = [];
+        this.moveLog = [];
         this.lastMove = null;
     },
 
@@ -117,14 +120,23 @@ const GameLogic = {
         if (!(this.isSandboxMode && this.sandboxFreeMovementEnabled) && this.wouldBeInCheck(fromRow, fromCol, toRow, toCol)) return false;
 
         const piece = this.boardState[fromRow][fromCol];
+        let targetPiece = this.boardState[toRow][toCol];
 
-        // Add current position to history before making move
-        this.moveHistory.push(this.getBoardString());
+        // 1. Detect Special Moves (for accurate capture tracking)
+        let isEnPassant = false;
+        if (piece[1] === 'P' && this.enPassantTarget && toRow === this.enPassantTarget.row && toCol === this.enPassantTarget.col) {
+            isEnPassant = true;
+            const victimRow = piece.startsWith('w') ? toRow + 1 : toRow - 1;
+            targetPiece = this.boardState[victimRow][toCol];
+        }
 
-        // Store the move for highlighting
-        this.lastMove = { fromRow, fromCol, toRow, toCol };
+        // Add current state to history before making move
+        this.moveHistory.push(this.getGameStateSnapshot());
 
-        // 1. Execute Special Moves (Castling/En Passant)
+        // Store the move for highlighting and animation
+        this.lastMove = { fromRow, fromCol, toRow, toCol, piece, captured: targetPiece, isEnPassant };
+
+        // 2. Execute Special Moves (Castling/En Passant)
         if (piece[1] === 'K' && Math.abs(toCol - fromCol) === 2) {
             const isKingside = toCol > fromCol;
             const rookCol = isKingside ? 7 : 0;
@@ -133,7 +145,7 @@ const GameLogic = {
             this.boardState[fromRow][rookCol] = '.';
         }
 
-        if (piece[1] === 'P' && this.enPassantTarget && toRow === this.enPassantTarget.row && toCol === this.enPassantTarget.col) {
+        if (isEnPassant) {
             const victimRow = piece.startsWith('w') ? toRow + 1 : toRow - 1;
             this.boardState[victimRow][toCol] = '.';
         }
@@ -164,19 +176,36 @@ const GameLogic = {
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
         this.checkGameState();
+
+        // Record move notation after state change for check/mate detection
+        this.recordMove(piece, fromRow, fromCol, toRow, toCol, targetPiece);
+
         return true;
     },
 
     promotePawn(type) {
-        // Add position before promotion to history
-        this.moveHistory.push(this.getBoardString());
-
         const prefix = this.turn === 'white' ? 'w' : 'b';
         this.boardState[this.promotionSquare.row][this.promotionSquare.col] = prefix + type;
         this.isPromoting = false;
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
         this.checkGameState();
+
+        // Update move notation for promotion
+        if (this.moveLog.length > 0) {
+            let notation = this.moveLog[this.moveLog.length - 1];
+            // Remove check/mate if present before adding promotion and recalculating
+            notation = notation.replace(/[+#]$/, '') + "=" + type;
+
+            const isCheck = this.isInCheck(this.turn);
+            const hasMoves = this.hasValidMoves(this.turn);
+            if (!hasMoves) {
+                notation += isCheck ? '#' : '';
+            } else if (isCheck) {
+                notation += '+';
+            }
+            this.moveLog[this.moveLog.length - 1] = notation;
+        }
     },
 
     checkMoveIsValid(fR, fC, tR, tC, board = this.boardState, turn = this.turn, enPassant = this.enPassantTarget, hasMoved = this.hasMoved) {
@@ -286,11 +315,77 @@ const GameLogic = {
         return JSON.stringify(this.boardState) + '|' + this.turn + '|' + JSON.stringify(this.enPassantTarget);
     },
 
+    getGameStateSnapshot() {
+        return {
+            boardState: JSON.parse(JSON.stringify(this.boardState)),
+            turn: this.turn,
+            enPassantTarget: this.enPassantTarget ? { ...this.enPassantTarget } : null,
+            hasMoved: { ...this.hasMoved },
+            lastMove: this.lastMove ? { ...this.lastMove } : null,
+            gameState: this.gameState
+        };
+    },
+
+    loadGameStateSnapshot(snapshot) {
+        this.boardState = snapshot.boardState;
+        this.turn = snapshot.turn;
+        this.enPassantTarget = snapshot.enPassantTarget;
+        this.hasMoved = snapshot.hasMoved;
+        this.lastMove = snapshot.lastMove;
+        this.gameState = snapshot.gameState;
+        this.isPromoting = false;
+        this.promotionSquare = null;
+    },
+
+    undoMove() {
+        if (this.moveHistory.length === 0) return false;
+
+        const snapshot = this.moveHistory.pop();
+        this.loadGameStateSnapshot(snapshot);
+        this.moveLog.pop();
+
+        if (this.autoFlip) this.perspective = this.turn;
+        return true;
+    },
+
+    recordMove(piece, fR, fC, tR, tC, targetPiece) {
+        const files = 'abcdefgh';
+        const isPawn = piece[1] === 'P';
+        const pieceType = isPawn ? '' : piece[1];
+        const capture = (targetPiece !== '.' || (isPawn && fC !== tC)) ? 'x' : '';
+        const toSquare = files[tC] + (8 - tR);
+
+        let moveNotation = pieceType;
+        if (isPawn && capture) {
+            moveNotation += files[fC]; // e.g., exd4
+        }
+        moveNotation += capture + toSquare;
+
+        // Handle castling notation
+        if (piece[1] === 'K' && Math.abs(tC - fC) === 2) {
+            moveNotation = tC > fC ? 'O-O' : 'O-O-O';
+        }
+
+        // Add check/mate indicators
+        const isCheck = this.isInCheck(this.turn);
+        const hasMoves = this.hasValidMoves(this.turn);
+
+        if (!hasMoves) {
+            if (isCheck) moveNotation += '#';
+        } else if (isCheck) {
+            moveNotation += '+';
+        }
+
+        this.moveLog.push(moveNotation);
+    },
+
     checkThreefoldRepetition() {
         const currentBoard = this.getBoardString();
         let count = 0;
         for (let i = 0; i < this.moveHistory.length; i++) {
-            if (this.moveHistory[i] === currentBoard) count++;
+            // For repetition we only care about the board boardState, turn, and en passant
+            const historyBoardString = JSON.stringify(this.moveHistory[i].boardState) + '|' + this.moveHistory[i].turn + '|' + JSON.stringify(this.moveHistory[i].enPassantTarget);
+            if (historyBoardString === currentBoard) count++;
         }
         return count >= 2; // 2 in history + current = 3 total
     },

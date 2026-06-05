@@ -9,6 +9,7 @@ const BoardRenderer = {
     // Tracking for right-click arrows
     rightClickStart: null,
     arrows: [],
+    lastMoveProcessed: null,
 
     init() {
         this.svgContainer = document.getElementById('arrow-svg');
@@ -25,6 +26,13 @@ const BoardRenderer = {
                 GamemodeManager.returnToMenu();
             });
         }
+
+        const resultAnalyzeBtn = document.getElementById('result-analyze-btn');
+        if (resultAnalyzeBtn) {
+            resultAnalyzeBtn.addEventListener('click', () => {
+                AnalysisManager.startAnalysis();
+            });
+        }
     },
 
     setupGlobalListeners() {
@@ -35,6 +43,13 @@ const BoardRenderer = {
         document.addEventListener('click', (e) => {
             if (e.button === 0) { // Left click
                 this.clearArrows();
+            }
+        });
+
+        // Handle window resize to keep arrows aligned
+        window.addEventListener('resize', () => {
+            if (this.arrows.length > 0) {
+                this.drawSVGArrows();
             }
         });
     },
@@ -74,13 +89,38 @@ const BoardRenderer = {
     render() {
         // Update coordinates whenever we render
         this.renderOutsideCoordinates();
+        this.updateMoveHistoryUI();
 
-        // Keep the SVG element when clearing the board innerHTML
-        this.container.innerHTML = '';
-        this.container.appendChild(this.svgContainer);
-        this.clearArrows(); // Reset visual arrows on a formal board state change
+        const targetBoard = AnalysisManager.isAnalyzing ? AnalysisManager.getCurrentBoard() : GameLogic.boardState;
+        const targetLastMove = AnalysisManager.isAnalyzing ? AnalysisManager.getCurrentLastMove() : GameLogic.lastMove;
 
         const isWhitePerspective = GameLogic.perspective === 'white';
+        const oldSquares = Array.from(this.container.querySelectorAll('.square'));
+
+        // Find captured piece for animation
+        let capturedPieceElem = null;
+        if (GameLogic.lastMove && GameLogic.lastMove !== this.lastMoveProcessed && GameLogic.lastMove.captured !== '.') {
+            const capR = isWhitePerspective ? GameLogic.lastMove.toRow : 7 - GameLogic.lastMove.toRow;
+            const capC = isWhitePerspective ? GameLogic.lastMove.toCol : 7 - GameLogic.lastMove.toCol;
+
+            // If it's en passant, the captured piece is in a different square
+            let targetSq;
+            if (GameLogic.lastMove.isEnPassant) {
+                const victimRow = GameLogic.lastMove.piece.startsWith('w') ? GameLogic.lastMove.toRow + 1 : GameLogic.lastMove.toRow - 1;
+                targetSq = oldSquares.find(sq => parseInt(sq.dataset.row) === victimRow && parseInt(sq.dataset.col) === GameLogic.lastMove.toCol);
+            } else {
+                targetSq = oldSquares.find(sq => parseInt(sq.dataset.row) === GameLogic.lastMove.toRow && parseInt(sq.dataset.col) === GameLogic.lastMove.toCol);
+            }
+
+            if (targetSq) {
+                const p = targetSq.querySelector('.piece');
+                if (p) capturedPieceElem = p.cloneNode(true);
+            }
+        }
+
+        this.container.innerHTML = '';
+        this.container.appendChild(this.svgContainer);
+        this.clearArrows();
 
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
@@ -92,9 +132,9 @@ const BoardRenderer = {
 
                 if (GameLogic.selectedSquare && GameLogic.selectedSquare.row === row && GameLogic.selectedSquare.col === col) {
                     colorClass = 'selected';
-                } else if (GameLogic.lastMove && 
-                           ((GameLogic.lastMove.fromRow === row && GameLogic.lastMove.fromCol === col) || 
-                            (GameLogic.lastMove.toRow === row && GameLogic.lastMove.toCol === col))) {
+                } else if (targetLastMove &&
+                           ((targetLastMove.fromRow === row && targetLastMove.fromCol === col) ||
+                            (targetLastMove.toRow === row && targetLastMove.toCol === col))) {
                     colorClass = 'last-move';
                 }
 
@@ -103,13 +143,41 @@ const BoardRenderer = {
                 square.dataset.col = col;
 
                 // Piece rendering
-                const pieceCode = GameLogic.getPieceAt(row, col);
+                const pieceCode = targetBoard[row][col];
                 if (pieceCode !== '.') {
-                    square.innerText = this.pieceSymbols[pieceCode];
+                    const pieceSpan = document.createElement('span');
+                    pieceSpan.className = 'piece';
+                    pieceSpan.innerText = this.pieceSymbols[pieceCode];
+                    square.appendChild(pieceSpan);
+
+                    // If this is the piece that just moved, prepare animation
+                    if (!AnalysisManager.isAnalyzing && GameLogic.lastMove && GameLogic.lastMove !== this.lastMoveProcessed &&
+                        GameLogic.lastMove.toRow === row && GameLogic.lastMove.toCol === col) {
+
+                        const fromR = isWhitePerspective ? GameLogic.lastMove.fromRow : 7 - GameLogic.lastMove.fromRow;
+                        const fromC = isWhitePerspective ? GameLogic.lastMove.fromCol : 7 - GameLogic.lastMove.fromCol;
+                        const toR = isWhitePerspective ? GameLogic.lastMove.toRow : 7 - GameLogic.lastMove.toRow;
+                        const toC = isWhitePerspective ? GameLogic.lastMove.toCol : 7 - GameLogic.lastMove.toCol;
+
+                        const squareSize = this.container.offsetWidth / 8;
+                        const dx = (fromC - toC) * squareSize;
+                        const dy = (fromR - toR) * squareSize;
+
+                        pieceSpan.style.transition = 'none';
+                        pieceSpan.style.transform = `translate(${dx}px, ${dy}px)`;
+
+                        requestAnimationFrame(() => {
+                            pieceSpan.style.transition = 'transform 0.2s ease-in-out';
+                            pieceSpan.style.transform = '';
+                        });
+                    }
                 }
 
                 // Left click handling
-                square.onclick = () => this.handleSquareClick(row, col);
+                square.onclick = () => {
+                    if (AnalysisManager.isAnalyzing) return;
+                    this.handleSquareClick(row, col);
+                };
 
                 // Right click handling for drawing arrows
                 square.onmousedown = (e) => {
@@ -131,11 +199,86 @@ const BoardRenderer = {
             }
         }
 
+        // Animate capture if one happened
+        if (capturedPieceElem) {
+            const toR = isWhitePerspective ? GameLogic.lastMove.toRow : 7 - GameLogic.lastMove.toRow;
+            const toC = isWhitePerspective ? GameLogic.lastMove.toCol : 7 - GameLogic.lastMove.toCol;
+
+            let capR = toR;
+            let capC = toC;
+
+            if (GameLogic.lastMove.isEnPassant) {
+                const victimRow = GameLogic.lastMove.piece.startsWith('w') ? GameLogic.lastMove.toRow + 1 : GameLogic.lastMove.toRow - 1;
+                capR = isWhitePerspective ? victimRow : 7 - victimRow;
+            }
+
+            const squareSize = this.container.offsetWidth / 8;
+            capturedPieceElem.style.left = (capC * squareSize) + 'px';
+            capturedPieceElem.style.top = (capR * squareSize) + 'px';
+            capturedPieceElem.style.transition = 'opacity 0.2s ease-out, transform 0.2s ease-out';
+            this.container.appendChild(capturedPieceElem);
+
+            requestAnimationFrame(() => {
+                capturedPieceElem.style.opacity = '0';
+                capturedPieceElem.style.transform = 'scale(0.5)';
+                setTimeout(() => capturedPieceElem.remove(), 200);
+            });
+        }
+
+        this.lastMoveProcessed = GameLogic.lastMove;
+
         if (GameLogic.isPromoting) this.showPromotionUI();
 
-        // Check and display game result if game has ended
         if (GameLogic.gameState) {
             this.showGameResult();
+        }
+    },
+
+    updateMoveHistoryUI() {
+        const moveList = document.getElementById('move-list');
+        if (!moveList) return;
+
+        moveList.innerHTML = '';
+        for (let i = 0; i < GameLogic.moveLog.length; i += 2) {
+            const row = document.createElement('div');
+            row.className = 'move-row';
+
+            const num = document.createElement('span');
+            num.className = 'move-number';
+            num.innerText = Math.floor(i / 2) + 1 + '.';
+            row.appendChild(num);
+
+            const whiteMove = document.createElement('span');
+            whiteMove.innerText = GameLogic.moveLog[i];
+            if (AnalysisManager.isAnalyzing && AnalysisManager.currentIndex === i) {
+                whiteMove.className = 'active-move';
+            }
+            whiteMove.onclick = () => {
+                if (AnalysisManager.isAnalyzing) AnalysisManager.goToMove(i);
+            };
+            row.appendChild(whiteMove);
+
+            if (GameLogic.moveLog[i + 1]) {
+                const blackMove = document.createElement('span');
+                blackMove.innerText = GameLogic.moveLog[i + 1];
+                if (AnalysisManager.isAnalyzing && AnalysisManager.currentIndex === i + 1) {
+                    blackMove.className = 'active-move';
+                }
+                blackMove.onclick = () => {
+                    if (AnalysisManager.isAnalyzing) AnalysisManager.goToMove(i + 1);
+                };
+                row.appendChild(blackMove);
+            }
+
+            moveList.appendChild(row);
+        }
+
+        // Auto-scroll to active move or bottom
+        if (AnalysisManager.isAnalyzing) {
+            const active = moveList.querySelector('.active-move');
+            if (active) active.scrollIntoView({ block: 'nearest' });
+        } else {
+            moveList.scrollTop = moveList.scrollHeight;
         }
     },
 
@@ -235,7 +378,7 @@ const BoardRenderer = {
         const oldArrows = this.svgContainer.querySelectorAll('polyline');
         oldArrows.forEach(a => a.remove());
 
-        const squareSize = 80;
+        const squareSize = this.container.offsetWidth / 8;
         const isWhitePerspective = GameLogic.perspective === 'white';
 
         this.arrows.forEach(arrow => {

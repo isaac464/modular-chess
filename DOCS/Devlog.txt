@@ -43,3 +43,12 @@ CHESS ENGINE DEVELOPMENT LOG
 - Re-architected board structure to separate coordinates from square DOM elements using grid wrapping.
 - Implemented static external rendering for ranks 8-1 on the left layout column and files a-h on the bottom layout row.
 - Eliminated node-overwriting issues during square redraw events.
+
+[2026-06-03] UI & ANIMATION ENHANCEMENTS
+- Implemented a side-panel move log using standard algebraic notation to track all match activity.
+- Integrated an "Undo" system; for bot matches, this reverts two plies to return to the player's previous turn.
+- Refactored piece rendering to utilise CSS transitions for smooth movement and capture visualisations (fade and scale effects).
+- Added a "Check Flash" animation to highlight the King's square when under threat.
+- Introduced a post-game "Analysis Mode" allowing users to navigate the full game history via state snapshots.
+- Overhauled responsive scaling using CSS `clamp()` and `vmin` units to ensure layout integrity across diverse viewport dimensions.
+- Resolved SVG arrow misalignment issues by implementing a window-resize listener for automatic coordinate recalculation.
