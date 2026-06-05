@@ -72,12 +72,6 @@ const BoardRenderer = {
     },
 
     render() {
-        // Check and display game result if game has ended
-        if (GameLogic.gameState) {
-            this.showGameResult();
-            return;
-        }
-
         // Update coordinates whenever we render
         this.renderOutsideCoordinates();
 
@@ -138,6 +132,11 @@ const BoardRenderer = {
         }
 
         if (GameLogic.isPromoting) this.showPromotionUI();
+
+        // Check and display game result if game has ended
+        if (GameLogic.gameState) {
+            this.showGameResult();
+        }
     },
 
     showGameResult() {
@@ -160,6 +159,9 @@ const BoardRenderer = {
     handleSquareClick(row, col) {
         if (GameLogic.isPromoting) return;
 
+        // Prevent human move during bot's turn in Classic mode
+        if (GamemodeManager.activeSettings.botDifficulty !== 'none' && GameLogic.turn === 'black') return;
+
         const selected = GameLogic.selectedSquare;
         if (selected) {
             const moveResult = GameLogic.movePiece(selected.row, selected.col, row, col);
@@ -167,6 +169,9 @@ const BoardRenderer = {
             if (moveResult === true || moveResult === "promote") {
                 GameLogic.selectedSquare = null;
                 this.render();
+                if (moveResult === true) {
+                    GamemodeManager.checkBotMove();
+                }
             } else {
                 const kingInCheck = GameLogic.isInCheck(GameLogic.turn);
                 const piece = GameLogic.getPieceAt(row, col);
@@ -306,6 +311,7 @@ const BoardRenderer = {
                 e.stopPropagation();
                 GameLogic.promotePawn(type);
                 this.render();
+                GamemodeManager.checkBotMove();
             };
             overlay.appendChild(btn);
         });

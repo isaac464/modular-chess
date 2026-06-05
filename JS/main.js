@@ -6,7 +6,8 @@ const GamemodeManager = {
     activeSettings: {
         autoFlip: false,
         freeMovement: false,
-        emptyBoard: false
+        emptyBoard: false,
+        botDifficulty: 'none'
     },
 
     gamemodes: {
@@ -20,6 +21,19 @@ const GamemodeManager = {
                     description: 'Perspective automatically shifts to the current player',
                     type: 'checkbox',
                     default: false
+                },
+                {
+                    id: 'bot-difficulty',
+                    name: 'Opponent',
+                    description: 'Select difficulty level',
+                    type: 'select',
+                    options: [
+                        { value: 'none', label: 'Human' },
+                        { value: 'easy', label: 'Bot (Easy)' },
+                        { value: 'medium', label: 'Bot (Medium)' },
+                        { value: 'hard', label: 'Bot (Hard)' }
+                    ],
+                    default: 'none'
                 }
             ],
             engineSettings: {
@@ -184,6 +198,18 @@ const GamemodeManager = {
                             </div>
                         </label>
                     `;
+                } else if (setting.type === 'select') {
+                    group.innerHTML = `
+                        <div class="settings-label">
+                            <div class="setting-details">
+                                <span class="checkbox-text">${setting.name}</span>
+                                <span class="checkbox-desc">${setting.description}</span>
+                            </div>
+                            <select id="setting-${setting.id}" class="settings-select">
+                                ${setting.options.map(opt => `<option value="${opt.value}" ${opt.value === setting.default ? 'selected' : ''}>${opt.label}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
                 }
 
                 settingsContent.appendChild(group);
@@ -220,6 +246,8 @@ const GamemodeManager = {
                     if (setting.id === 'auto-flip') this.activeSettings.autoFlip = element.checked;
                     if (setting.id === 'free-movement') this.activeSettings.freeMovement = element.checked;
                     if (setting.id === 'empty-board') this.activeSettings.emptyBoard = element.checked;
+                } else if (setting.type === 'select') {
+                    if (setting.id === 'bot-difficulty') this.activeSettings.botDifficulty = element.value;
                 }
             }
         });
@@ -296,6 +324,17 @@ const GamemodeManager = {
 
         // Initialize the classic board renderer
         BoardRenderer.init();
+
+        // If bot is playing and it's their turn (though it should be white's turn initially)
+        this.checkBotMove();
+    },
+
+    async checkBotMove() {
+        if (this.activeSettings.botDifficulty !== 'none' && GameLogic.turn === 'black' && !GameLogic.isPromoting) {
+            console.log("Bot is thinking...");
+            await ChessBot.makeMove(this.activeSettings.botDifficulty, 'black');
+            console.log("Bot move completed");
+        }
     },
 
     applyGamemodeSettings() {
@@ -347,7 +386,8 @@ const GamemodeManager = {
             this.activeSettings = {
                 autoFlip: false,
                 freeMovement: false,
-                emptyBoard: false
+                emptyBoard: false,
+                botDifficulty: 'none'
             };
 
             // Reset perspective UI
