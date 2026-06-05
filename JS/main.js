@@ -178,9 +178,17 @@ const GamemodeManager = {
         // Gamemode card selection
         const gamemodeCards = document.querySelectorAll('.gamemode-card');
         gamemodeCards.forEach(card => {
-            card.addEventListener('click', (e) => {
+            const handleSelect = () => {
                 const mode = card.dataset.mode;
                 this.selectGamemode(mode);
+            };
+
+            card.addEventListener('click', handleSelect);
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelect();
+                }
             });
         });
 

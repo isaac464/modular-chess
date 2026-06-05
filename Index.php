@@ -19,17 +19,17 @@
 
             <div class="gamemodes-grid">
                 <!-- Classic Chess -->
-                <div class="gamemode-card" data-mode="classic">
-                    <div class="gamemode-icon">♟</div>
-                    <h2 class="gamemode-name">Classic</h2>
-                    <p class="gamemode-description">Play traditional chess with no time limit. Perfect for learning and strategy.</p>
+                <div class="gamemode-card" data-mode="classic" role="button" tabindex="0" aria-labelledby="classic-title" aria-describedby="classic-desc">
+                    <div class="gamemode-icon" aria-hidden="true">♟</div>
+                    <h2 id="classic-title" class="gamemode-name">Classic</h2>
+                    <p id="classic-desc" class="gamemode-description">Play traditional chess with no time limit. Perfect for learning and strategy.</p>
                 </div>
 
                 <!-- Sandbox Mode -->
-                <div class="gamemode-card" data-mode="sandbox">
-                    <div class="gamemode-icon">🎨</div>
-                    <h2 class="gamemode-name">Sandbox</h2>
-                    <p class="gamemode-description">Free placement mode. Place pieces anywhere on the board to create custom positions.</p>
+                <div class="gamemode-card" data-mode="sandbox" role="button" tabindex="0" aria-labelledby="sandbox-title" aria-describedby="sandbox-desc">
+                    <div class="gamemode-icon" aria-hidden="true">🎨</div>
+                    <h2 id="sandbox-title" class="gamemode-name">Sandbox</h2>
+                    <p id="sandbox-desc" class="gamemode-description">Free placement mode. Place pieces anywhere on the board to create custom positions.</p>
                 </div>
             </div>
 
@@ -97,17 +97,17 @@
                 <div id="analysis-controls" class="analysis-controls hidden">
                     <h3 class="side-panel-title">Analysis</h3>
                     <div class="analysis-nav">
-                        <button id="analysis-first" class="nav-btn" title="First Move">«</button>
-                        <button id="analysis-prev" class="nav-btn" title="Previous Move">‹</button>
-                        <button id="analysis-next" class="nav-btn" title="Next Move">›</button>
-                        <button id="analysis-last" class="nav-btn" title="Last Move">»</button>
+                        <button id="analysis-first" class="nav-btn" title="First Move" aria-label="First Move">«</button>
+                        <button id="analysis-prev" class="nav-btn" title="Previous Move" aria-label="Previous Move">‹</button>
+                        <button id="analysis-next" class="nav-btn" title="Next Move" aria-label="Next Move">›</button>
+                        <button id="analysis-last" class="nav-btn" title="Last Move" aria-label="Last Move">»</button>
                     </div>
                     <div class="side-panel-controls">
                         <button id="analysis-exit-btn" class="control-btn">Exit Analysis</button>
                     </div>
                 </div>
                 <div id="game-controls" class="side-panel-controls">
-                    <button id="undo-btn" class="control-btn">↶ Undo</button>
+                    <button id="undo-btn" class="control-btn" aria-label="Undo last move">↶ Undo</button>
                 </div>
             </div>
         </div>

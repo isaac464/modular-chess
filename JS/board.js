@@ -445,10 +445,12 @@ const BoardRenderer = {
         const overlay = document.createElement('div');
         overlay.style = "position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; z-index:1000; gap:10px;";
 
+        const pieceNames = { 'Q': 'Queen', 'R': 'Rook', 'B': 'Bishop', 'N': 'Knight' };
         ['Q', 'R', 'B', 'N'].forEach(type => {
             const btn = document.createElement('button');
             const prefix = GameLogic.turn === 'white' ? 'w' : 'b';
             btn.innerText = this.pieceSymbols[prefix + type];
+            btn.setAttribute('aria-label', `Promote to ${pieceNames[type]}`);
             btn.style = "width:60px; height:60px; font-size:40px; cursor:pointer; background:#fff; border:2px solid #333;";
             btn.onclick = (e) => {
                 e.stopPropagation();

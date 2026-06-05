@@ -84,14 +84,21 @@
     z-index: 0;
 }
 
-.gamemode-card:hover {
+.gamemode-card:hover,
+.gamemode-card:focus-visible {
     border-color: rgba(255, 255, 255, 0.3);
     transform: translateY(-10px);
     box-shadow: 0 15px 40px rgba(231, 76, 60, 0.3);
+    outline: none;
 }
 
-.gamemode-card:hover::before {
+.gamemode-card:hover::before,
+.gamemode-card:focus-visible::before {
     opacity: 1;
+}
+
+.gamemode-card:focus-visible {
+    box-shadow: 0 15px 40px rgba(231, 76, 60, 0.3), 0 0 0 4px rgba(231, 76, 60, 0.6);
 }
 
 .gamemode-card:active {
