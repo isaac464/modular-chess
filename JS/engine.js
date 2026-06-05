@@ -133,9 +133,6 @@ const GameLogic = {
         // Add current state to history before making move
         this.moveHistory.push(this.getGameStateSnapshot());
 
-        // Record move notation
-        this.recordMove(piece, fromRow, fromCol, toRow, toCol, targetPiece);
-
         // Store the move for highlighting and animation
         this.lastMove = { fromRow, fromCol, toRow, toCol, piece, captured: targetPiece, isEnPassant };
 
@@ -179,21 +176,36 @@ const GameLogic = {
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
         this.checkGameState();
+
+        // Record move notation after state change for check/mate detection
+        this.recordMove(piece, fromRow, fromCol, toRow, toCol, targetPiece);
+
         return true;
     },
 
     promotePawn(type) {
-        // Update move notation for promotion
-        if (this.moveLog.length > 0) {
-            this.moveLog[this.moveLog.length - 1] += "=" + type;
-        }
-
         const prefix = this.turn === 'white' ? 'w' : 'b';
         this.boardState[this.promotionSquare.row][this.promotionSquare.col] = prefix + type;
         this.isPromoting = false;
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
         this.checkGameState();
+
+        // Update move notation for promotion
+        if (this.moveLog.length > 0) {
+            let notation = this.moveLog[this.moveLog.length - 1];
+            // Remove check/mate if present before adding promotion and recalculating
+            notation = notation.replace(/[+#]$/, '') + "=" + type;
+
+            const isCheck = this.isInCheck(this.turn);
+            const hasMoves = this.hasValidMoves(this.turn);
+            if (!hasMoves) {
+                notation += isCheck ? '#' : '';
+            } else if (isCheck) {
+                notation += '+';
+            }
+            this.moveLog[this.moveLog.length - 1] = notation;
+        }
     },
 
     checkMoveIsValid(fR, fC, tR, tC, board = this.boardState, turn = this.turn, enPassant = this.enPassantTarget, hasMoved = this.hasMoved) {
@@ -338,11 +350,10 @@ const GameLogic = {
 
     recordMove(piece, fR, fC, tR, tC, targetPiece) {
         const files = 'abcdefgh';
-        const fromSquare = files[fC] + (8 - fR);
-        const toSquare = files[tC] + (8 - tR);
         const isPawn = piece[1] === 'P';
         const pieceType = isPawn ? '' : piece[1];
         const capture = (targetPiece !== '.' || (isPawn && fC !== tC)) ? 'x' : '';
+        const toSquare = files[tC] + (8 - tR);
 
         let moveNotation = pieceType;
         if (isPawn && capture) {
@@ -353,6 +364,16 @@ const GameLogic = {
         // Handle castling notation
         if (piece[1] === 'K' && Math.abs(tC - fC) === 2) {
             moveNotation = tC > fC ? 'O-O' : 'O-O-O';
+        }
+
+        // Add check/mate indicators
+        const isCheck = this.isInCheck(this.turn);
+        const hasMoves = this.hasValidMoves(this.turn);
+
+        if (!hasMoves) {
+            if (isCheck) moveNotation += '#';
+        } else if (isCheck) {
+            moveNotation += '+';
         }
 
         this.moveLog.push(moveNotation);

@@ -26,6 +26,13 @@ const BoardRenderer = {
                 GamemodeManager.returnToMenu();
             });
         }
+
+        const resultAnalyzeBtn = document.getElementById('result-analyze-btn');
+        if (resultAnalyzeBtn) {
+            resultAnalyzeBtn.addEventListener('click', () => {
+                AnalysisManager.startAnalysis();
+            });
+        }
     },
 
     setupGlobalListeners() {
@@ -77,6 +84,9 @@ const BoardRenderer = {
         this.renderOutsideCoordinates();
         this.updateMoveHistoryUI();
 
+        const targetBoard = AnalysisManager.isAnalyzing ? AnalysisManager.getCurrentBoard() : GameLogic.boardState;
+        const targetLastMove = AnalysisManager.isAnalyzing ? AnalysisManager.getCurrentLastMove() : GameLogic.lastMove;
+
         const isWhitePerspective = GameLogic.perspective === 'white';
         const oldSquares = Array.from(this.container.querySelectorAll('.square'));
 
@@ -115,9 +125,9 @@ const BoardRenderer = {
 
                 if (GameLogic.selectedSquare && GameLogic.selectedSquare.row === row && GameLogic.selectedSquare.col === col) {
                     colorClass = 'selected';
-                } else if (GameLogic.lastMove && 
-                           ((GameLogic.lastMove.fromRow === row && GameLogic.lastMove.fromCol === col) || 
-                            (GameLogic.lastMove.toRow === row && GameLogic.lastMove.toCol === col))) {
+                } else if (targetLastMove &&
+                           ((targetLastMove.fromRow === row && targetLastMove.fromCol === col) ||
+                            (targetLastMove.toRow === row && targetLastMove.toCol === col))) {
                     colorClass = 'last-move';
                 }
 
@@ -126,7 +136,7 @@ const BoardRenderer = {
                 square.dataset.col = col;
 
                 // Piece rendering
-                const pieceCode = GameLogic.getPieceAt(row, col);
+                const pieceCode = targetBoard[row][col];
                 if (pieceCode !== '.') {
                     const pieceSpan = document.createElement('span');
                     pieceSpan.className = 'piece';
@@ -134,7 +144,7 @@ const BoardRenderer = {
                     square.appendChild(pieceSpan);
 
                     // If this is the piece that just moved, prepare animation
-                    if (GameLogic.lastMove && GameLogic.lastMove !== this.lastMoveProcessed &&
+                    if (!AnalysisManager.isAnalyzing && GameLogic.lastMove && GameLogic.lastMove !== this.lastMoveProcessed &&
                         GameLogic.lastMove.toRow === row && GameLogic.lastMove.toCol === col) {
 
                         const fromR = isWhitePerspective ? GameLogic.lastMove.fromRow : 7 - GameLogic.lastMove.fromRow;
@@ -156,7 +166,10 @@ const BoardRenderer = {
                 }
 
                 // Left click handling
-                square.onclick = () => this.handleSquareClick(row, col);
+                square.onclick = () => {
+                    if (AnalysisManager.isAnalyzing) return;
+                    this.handleSquareClick(row, col);
+                };
 
                 // Right click handling for drawing arrows
                 square.onmousedown = (e) => {
@@ -228,17 +241,36 @@ const BoardRenderer = {
 
             const whiteMove = document.createElement('span');
             whiteMove.innerText = GameLogic.moveLog[i];
+            if (AnalysisManager.isAnalyzing && AnalysisManager.currentIndex === i) {
+                whiteMove.className = 'active-move';
+            }
+            whiteMove.onclick = () => {
+                if (AnalysisManager.isAnalyzing) AnalysisManager.goToMove(i);
+            };
             row.appendChild(whiteMove);
 
             if (GameLogic.moveLog[i + 1]) {
                 const blackMove = document.createElement('span');
                 blackMove.innerText = GameLogic.moveLog[i + 1];
+                if (AnalysisManager.isAnalyzing && AnalysisManager.currentIndex === i + 1) {
+                    blackMove.className = 'active-move';
+                }
+                blackMove.onclick = () => {
+                    if (AnalysisManager.isAnalyzing) AnalysisManager.goToMove(i + 1);
+                };
                 row.appendChild(blackMove);
             }
 
             moveList.appendChild(row);
         }
-        moveList.scrollTop = moveList.scrollHeight;
+
+        // Auto-scroll to active move or bottom
+        if (AnalysisManager.isAnalyzing) {
+            const active = moveList.querySelector('.active-move');
+            if (active) active.scrollIntoView({ block: 'nearest' });
+        } else {
+            moveList.scrollTop = moveList.scrollHeight;
+        }
     },
 
     showGameResult() {

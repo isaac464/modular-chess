@@ -90,11 +90,23 @@
             </div>
 
             <div class="side-panel">
-                <div class="move-history">
+                <div id="history-section" class="move-history">
                     <h3 class="side-panel-title">Move History</h3>
                     <div id="move-list" class="move-list"></div>
                 </div>
-                <div class="side-panel-controls">
+                <div id="analysis-controls" class="analysis-controls hidden">
+                    <h3 class="side-panel-title">Analysis</h3>
+                    <div class="analysis-nav">
+                        <button id="analysis-first" class="nav-btn" title="First Move">«</button>
+                        <button id="analysis-prev" class="nav-btn" title="Previous Move">‹</button>
+                        <button id="analysis-next" class="nav-btn" title="Next Move">›</button>
+                        <button id="analysis-last" class="nav-btn" title="Last Move">»</button>
+                    </div>
+                    <div class="side-panel-controls">
+                        <button id="analysis-exit-btn" class="control-btn">Exit Analysis</button>
+                    </div>
+                </div>
+                <div id="game-controls" class="side-panel-controls">
                     <button id="undo-btn" class="control-btn">↶ Undo</button>
                 </div>
             </div>
@@ -103,7 +115,10 @@
         <div id="game-result" class="game-result hidden">
             <div class="result-content">
                 <h1 id="result-title" class="result-title">White Won</h1>
-                <button id="result-menu-btn" class="result-button">Return to Menu</button>
+                <div class="result-buttons">
+                    <button id="result-analyze-btn" class="result-button-secondary">Analyze Game</button>
+                    <button id="result-menu-btn" class="result-button">Return to Menu</button>
+                </div>
             </div>
         </div>
     </div>
