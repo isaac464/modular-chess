@@ -44,7 +44,7 @@ CHESS ENGINE DEVELOPMENT LOG
 - Implemented static external rendering for ranks 8-1 on the left layout column and files a-h on the bottom layout row.
 - Eliminated node-overwriting issues during square redraw events.
 
-[2026-06-03] UI & ANIMATION ENHANCEMENTS
+[2026-06-05] UI & ANIMATION ENHANCEMENTS
 - Implemented a side-panel move log using standard algebraic notation to track all match activity.
 - Integrated an "Undo" system; for bot matches, this reverts two plies to return to the player's previous turn.
 - Refactored piece rendering to utilise CSS transitions for smooth movement and capture visualisations (fade and scale effects).
