@@ -357,6 +357,11 @@ const GamemodeManager = {
             }
         });
 
+        // Enforce constraints
+        if (this.currentMode === 'classic' && this.activeSettings.botDifficulty !== 'none') {
+            this.activeSettings.autoFlip = false;
+        }
+
         // Handle board initialization based on settings
         if (this.activeSettings.emptyBoard) {
             GameLogic.clearBoard();
