@@ -333,6 +333,36 @@
     margin-top: 2px;
 }
 
+.settings-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #ecf0f1;
+    padding: 8px 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+    margin-left: auto;
+    min-width: 150px;
+}
+
+.settings-select:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(231, 76, 60, 0.5);
+}
+
+.settings-select:focus {
+    border-color: #e74c3c;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.2);
+}
+
+.settings-select option {
+    background: #16213e;
+    color: #ecf0f1;
+}
+
 .setting-details {
     display: flex;
     flex-direction: column;
