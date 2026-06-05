@@ -45,6 +45,13 @@ const BoardRenderer = {
                 this.clearArrows();
             }
         });
+
+        // Handle window resize to keep arrows aligned
+        window.addEventListener('resize', () => {
+            if (this.arrows.length > 0) {
+                this.drawSVGArrows();
+            }
+        });
     },
 
     clearArrows() {
