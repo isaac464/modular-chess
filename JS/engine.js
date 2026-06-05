@@ -88,7 +88,7 @@ const GameLogic = {
     wouldBeInCheck(fR, fC, tR, tC) {
         const simBoard = JSON.parse(JSON.stringify(this.boardState));
         const piece = simBoard[fR][fC];
-        
+
         // Handle En Passant in simulation
         if (piece[1] === 'P' && this.enPassantTarget && tR === this.enPassantTarget.row && tC === this.enPassantTarget.col) {
             const victimRow = piece.startsWith('w') ? tR + 1 : tR - 1;
@@ -103,7 +103,7 @@ const GameLogic = {
     movePiece(fromRow, fromCol, toRow, toCol) {
         if (this.isPromoting) return false;
         if (!this.checkMoveIsValid(fromRow, fromCol, toRow, toCol)) return false;
-        
+
         // In sandbox mode with free movement, skip check validation
         if (!(this.isSandboxMode && this.sandboxFreeMovementEnabled) && this.wouldBeInCheck(fromRow, fromCol, toRow, toCol)) return false;
 
@@ -132,7 +132,7 @@ const GameLogic = {
         if (fromRow === 0 && fromCol === 7) this.hasMoved.bR_right = true;
 
         // 3. Update en passant target for NEXT turn
-        const nextEnPassant = (piece[1] === 'P' && Math.abs(toRow - fromRow) === 2) 
+        const nextEnPassant = (piece[1] === 'P' && Math.abs(toRow - fromRow) === 2)
             ? { row: (fromRow + toRow) / 2, col: fromCol } : null;
 
         // 4. Update Board State
@@ -159,44 +159,79 @@ const GameLogic = {
         if (this.autoFlip) this.perspective = this.turn;
     },
 
-    checkMoveIsValid(fR, fC, tR, tC) {
-        const piece = this.getPieceAt(fR, fC);
-        
+    checkMoveIsValid(fR, fC, tR, tC, board = this.boardState, turn = this.turn, enPassant = this.enPassantTarget, hasMoved = this.hasMoved) {
+        const piece = board[fR][fC];
+
         // In sandbox mode with free movement enabled, allow moving any piece
-        if (this.isSandboxMode && this.sandboxFreeMovementEnabled) {
+        if (this.isSandboxMode && this.sandboxFreeMovementEnabled && board === this.boardState) {
             return piece !== '.';
         }
-        
-        if (piece === '.' || (piece.startsWith('w') ? 'white' : 'black') !== this.turn) return false;
-        
-        const target = this.getPieceAt(tR, tC);
-        if (target !== '.' && (target.startsWith('w') ? 'white' : 'black') === this.turn) return false;
-        
+
+        if (piece === '.' || (piece.startsWith('w') ? 'white' : 'black') !== turn) return false;
+
+        const target = board[tR][tC];
+        if (target !== '.' && (target.startsWith('w') ? 'white' : 'black') === turn) return false;
+
         if (piece[1] === 'K' && Math.abs(tC - fC) === 2) {
-            const kingMoved = this.turn === 'white' ? this.hasMoved.wK : this.hasMoved.bK;
-            if (kingMoved || this.isInCheck(this.turn)) return false;
+            const kingMoved = turn === 'white' ? hasMoved.wK : hasMoved.bK;
+            if (kingMoved || this.isInCheck(turn, board)) return false;
 
             const kingside = tC > fC;
-            if (this.turn === 'white') {
-                if (kingside && (this.hasMoved.wR_right || this.getPieceAt(7, 7) !== 'wR')) return false;
-                if (!kingside && (this.hasMoved.wR_left || this.getPieceAt(7, 0) !== 'wR')) return false;
+            if (turn === 'white') {
+                if (kingside && (hasMoved.wR_right || board[7][7] !== 'wR')) return false;
+                if (!kingside && (hasMoved.wR_left || board[7][0] !== 'wR')) return false;
             } else {
-                if (kingside && (this.hasMoved.bR_right || this.getPieceAt(0, 7) !== 'bR')) return false;
-                if (!kingside && (this.hasMoved.bR_left || this.getPieceAt(0, 0) !== 'bR')) return false;
+                if (kingside && (hasMoved.bR_right || board[0][7] !== 'bR')) return false;
+                if (!kingside && (hasMoved.bR_left || board[0][0] !== 'bR')) return false;
             }
 
             const path = kingside ? [5, 6] : [1, 2, 3];
             for (let col of path) {
-                if (this.getPieceAt(fR, col) !== '.' || this.isSquareAttacked(fR, col, this.turn === 'white' ? 'black' : 'white')) return false;
+                if (board[fR][col] !== '.' || this.isSquareAttacked(fR, col, turn === 'white' ? 'black' : 'white', board)) return false;
             }
             return true;
         }
-        
+
         // In sandbox mode with free movement enabled, allow any piece to move to any square
-        if (this.isSandboxMode && this.sandboxFreeMovementEnabled) {
+        if (this.isSandboxMode && this.sandboxFreeMovementEnabled && board === this.boardState) {
             return true;
         }
-        
-        return PieceMovement.validateBasicMove(fR, fC, tR, tC, this.boardState, this.enPassantTarget);
+
+        return PieceMovement.validateBasicMove(fR, fC, tR, tC, board, enPassant);
+    },
+
+    getAllValidMoves(color, board = this.boardState, enPassant = this.enPassantTarget, hasMoved = this.hasMoved) {
+        const moves = [];
+        for (let fR = 0; fR < 8; fR++) {
+            for (let fC = 0; fC < 8; fC++) {
+                const piece = board[fR][fC];
+                if (piece !== '.' && (piece.startsWith('w') ? 'white' : 'black') === color) {
+                    for (let tR = 0; tR < 8; tR++) {
+                        for (let tC = 0; tC < 8; tC++) {
+                            if (this.checkMoveIsValid(fR, fC, tR, tC, board, color, enPassant, hasMoved)) {
+                                if (!this.wouldBeInCheckSim(fR, fC, tR, tC, board, color, enPassant)) {
+                                    moves.push({ fR, fC, tR, tC });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return moves;
+    },
+
+    wouldBeInCheckSim(fR, fC, tR, tC, board, color, enPassant) {
+        const simBoard = JSON.parse(JSON.stringify(board));
+        const piece = simBoard[fR][fC];
+
+        if (piece[1] === 'P' && enPassant && tR === enPassant.row && tC === enPassant.col) {
+            const victimRow = piece.startsWith('w') ? tR + 1 : tR - 1;
+            simBoard[victimRow][tC] = '.';
+        }
+
+        simBoard[tR][tC] = piece;
+        simBoard[fR][fC] = '.';
+        return this.isInCheck(color, simBoard);
     }
 };
