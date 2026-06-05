@@ -146,6 +146,14 @@ const GamemodeManager = {
             });
         }
 
+        // Undo button
+        const undoBtn = document.getElementById('undo-btn');
+        if (undoBtn) {
+            undoBtn.addEventListener('click', () => {
+                this.undoLastMove();
+            });
+        }
+
         // Perspective controls
         const flipBoardBtn = document.getElementById('flip-board-btn');
 
@@ -335,6 +343,29 @@ const GamemodeManager = {
             await ChessBot.makeMove(this.activeSettings.botDifficulty, 'black');
             console.log("Bot move completed");
         }
+    },
+
+    undoLastMove() {
+        if (GameLogic.isPromoting) return;
+
+        // In human vs bot, we want to undo both the bot's move and the player's last move
+        if (this.activeSettings.botDifficulty !== 'none') {
+            // If it's currently human's turn, bot just moved, so undo two steps (bot's and player's)
+            // If it's currently bot's turn (waiting for bot), just undo one (player's)
+            if (GameLogic.turn === 'white') {
+                GameLogic.undoMove();
+                GameLogic.undoMove();
+            } else {
+                GameLogic.undoMove();
+            }
+        } else {
+            // In human vs human, just undo one move
+            GameLogic.undoMove();
+        }
+
+        // Prevent animation on undo
+        BoardRenderer.lastMoveProcessed = GameLogic.lastMove;
+        BoardRenderer.render();
     },
 
     applyGamemodeSettings() {

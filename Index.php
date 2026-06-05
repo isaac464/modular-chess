@@ -76,16 +76,28 @@
             </div>
         </div>
 
-        <div class="board-wrapper">
-            <div id="left-coordinates" class="coordinates vertical"></div>
+        <div class="game-container">
+            <div class="board-wrapper">
+                <div id="left-coordinates" class="coordinates vertical"></div>
 
-            <div id="chessboard">
-                <svg id="arrow-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></svg>
+                <div id="chessboard">
+                    <svg id="arrow-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;"></svg>
+                </div>
+
+                <div></div>
+
+                <div id="bottom-coordinates" class="coordinates horizontal"></div>
             </div>
 
-            <div></div>
-
-            <div id="bottom-coordinates" class="coordinates horizontal"></div>
+            <div class="side-panel">
+                <div class="move-history">
+                    <h3 class="side-panel-title">Move History</h3>
+                    <div id="move-list" class="move-list"></div>
+                </div>
+                <div class="side-panel-controls">
+                    <button id="undo-btn" class="control-btn">↶ Undo</button>
+                </div>
+            </div>
         </div>
 
         <div id="game-result" class="game-result hidden">

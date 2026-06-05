@@ -12,6 +12,12 @@ html, body {
     overflow: hidden;
 }
 
+.game-container {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
 /* The Container uses CSS Grid to create a 2x2 layout:
    Top-Left: Numbers column
    Top-Right: The Chessboard
@@ -26,6 +32,7 @@ html, body {
     padding: 10px;
     border-radius: 4px;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    position: relative;
 }
 
 /* The actual board grid */
@@ -38,6 +45,57 @@ html, body {
     grid-template-rows: repeat(8, 80px);
     width: 640px;
     height: 640px;
+}
+
+.side-panel {
+    width: 250px;
+    height: 690px; /* Matches board height + labels + padding approx */
+    background-color: #262421;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    box-sizing: border-box;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.side-panel-title {
+    color: #bababa;
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+    text-align: center;
+    border-bottom: 1px solid #3d3b38;
+    padding-bottom: 10px;
+}
+
+.move-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    color: #bdc3c7;
+    font-family: monospace;
+    font-size: 1.1em;
+    padding: 5px;
+}
+
+.move-row {
+    display: grid;
+    grid-template-columns: 30px 1fr 1fr;
+    padding: 5px 0;
+    border-bottom: 1px solid #3d3b38;
+}
+
+.move-number {
+    color: #777;
+}
+
+.side-panel-controls {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.side-panel-controls button {
+    flex-grow: 1;
 }
 
 /* Coordinates Styling */
@@ -87,6 +145,21 @@ html, body {
     font-size: 55px;
     cursor: pointer;
     user-select: none;
+    position: relative;
+}
+
+/* Piece Animation */
+.piece {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 55px;
+    transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+    pointer-events: none;
+    z-index: 5;
 }
 
 .white { background-color: #f0d9b5; }
