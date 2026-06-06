@@ -236,6 +236,10 @@ const GamemodeManager = {
         const sandboxTimerBtn = document.getElementById('sandbox-timer-btn');
         if (sandboxTimerBtn) {
             sandboxTimerBtn.addEventListener('click', () => {
+                if (this.activeSettings.freeMovement) {
+                    console.log("Timer disabled in Free Piece Movement mode");
+                    return;
+                }
                 if (GameLogic.timerEnabled) {
                     GameLogic.timerEnabled = false;
                     GameLogic.stopTimer();
@@ -247,6 +251,16 @@ const GamemodeManager = {
                     GameLogic.startTimer();
                 }
                 BoardRenderer.updateTimerDisplay();
+            });
+        }
+
+        // Settings dynamic updates (Event Delegation)
+        const settingsContent = document.getElementById('settings-content');
+        if (settingsContent) {
+            settingsContent.addEventListener('change', (e) => {
+                if (this.currentMode === 'sandbox' && e.target.id === 'setting-free-movement') {
+                    this.updateSandboxSettingsUI();
+                }
             });
         }
 
@@ -411,6 +425,28 @@ const GamemodeManager = {
                 if (gamemodeScreen) gamemodeScreen.classList.add('hidden');
             }
             settingsScreen.classList.remove('hidden');
+
+            // Add dynamic behavior for Sandbox settings
+            if (mode === 'sandbox') {
+                this.updateSandboxSettingsUI();
+            }
+        }
+    },
+
+    updateSandboxSettingsUI() {
+        const freeMovementCheckbox = document.getElementById('setting-free-movement');
+        const timeLimitSelect = document.getElementById('setting-time-limit');
+
+        if (freeMovementCheckbox && timeLimitSelect) {
+            const settingsGroup = timeLimitSelect.closest('.settings-group');
+            if (freeMovementCheckbox.checked) {
+                timeLimitSelect.value = 'none';
+                timeLimitSelect.disabled = true;
+                if (settingsGroup) settingsGroup.style.opacity = '0.5';
+            } else {
+                timeLimitSelect.disabled = false;
+                if (settingsGroup) settingsGroup.style.opacity = '1';
+            }
         }
     },
 
@@ -534,6 +570,16 @@ const GamemodeManager = {
         if (this.currentMode && this.gamemodes[this.currentMode].showSandboxPanel) {
             if (historyPanel) historyPanel.classList.add('hidden');
             if (sandboxSections) sandboxSections.classList.remove('hidden');
+
+            // Handle Sandbox timer button visibility based on settings
+            const sandboxTimerBtn = document.getElementById('sandbox-timer-btn');
+            if (sandboxTimerBtn) {
+                if (this.activeSettings.freeMovement) {
+                    sandboxTimerBtn.classList.add('hidden');
+                } else {
+                    sandboxTimerBtn.classList.remove('hidden');
+                }
+            }
         } else {
             if (historyPanel) historyPanel.classList.remove('hidden');
             if (sandboxSections) sandboxSections.classList.add('hidden');

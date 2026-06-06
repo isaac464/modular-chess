@@ -401,6 +401,8 @@ const BoardRenderer = {
         // Prevent human move during bot's turn in Classic mode
         if (GamemodeManager.activeSettings.botDifficulty !== 'none' && GameLogic.turn === 'black') return;
 
+        const isFreeMovement = GameLogic.isSandboxMode && GameLogic.sandboxFreeMovementEnabled;
+
         // Sandbox Piece Spawning
         if (GameLogic.isSandboxMode && GamemodeManager.selectedPalettePiece) {
             GameLogic.boardState[row][col] = GamemodeManager.selectedPalettePiece;
@@ -422,7 +424,7 @@ const BoardRenderer = {
                 const kingInCheck = GameLogic.isInCheck(GameLogic.turn);
                 const piece = GameLogic.getPieceAt(row, col);
 
-                if (piece !== '.' && (piece.startsWith('w') ? 'white' : 'black') === GameLogic.turn) {
+                if (piece !== '.' && (isFreeMovement || (piece.startsWith('w') ? 'white' : 'black') === GameLogic.turn)) {
                     GameLogic.selectedSquare = { row, col };
                 } else {
                     GameLogic.selectedSquare = null;
@@ -440,7 +442,7 @@ const BoardRenderer = {
             }
         } else {
             const piece = GameLogic.getPieceAt(row, col);
-            if (piece !== '.' && (piece.startsWith('w') ? 'white' : 'black') === GameLogic.turn) {
+            if (piece !== '.' && (isFreeMovement || (piece.startsWith('w') ? 'white' : 'black') === GameLogic.turn)) {
                 GameLogic.selectedSquare = { row, col };
                 this.render();
             }
