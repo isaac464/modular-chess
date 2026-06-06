@@ -212,16 +212,24 @@ const GameLogic = {
 
     checkMoveIsValid(fR, fC, tR, tC, board = this.boardState, turn = this.turn, enPassant = this.enPassantTarget, hasMoved = this.hasMoved) {
         const piece = board[fR][fC];
-
-        // In sandbox mode with free movement enabled, allow moving any piece
-        if (this.isSandboxMode && this.sandboxFreeMovementEnabled && board === this.boardState) {
-            return piece !== '.';
-        }
-
-        if (piece === '.' || (piece.startsWith('w') ? 'white' : 'black') !== turn) return false;
+        if (piece === '.') return false;
 
         const target = board[tR][tC];
-        if (target !== '.' && (target.startsWith('w') ? 'white' : 'black') === turn) return false;
+        const pieceColor = piece.startsWith('w') ? 'white' : 'black';
+
+        // Cannot capture own pieces or kings
+        if (target !== '.') {
+            const targetColor = target.startsWith('w') ? 'white' : 'black';
+            if (pieceColor === targetColor) return false;
+            if (target[1] === 'K') return false;
+        }
+
+        // In sandbox mode with free movement enabled, allow moving any piece (regardless of turn)
+        if (this.isSandboxMode && this.sandboxFreeMovementEnabled && board === this.boardState) {
+            return true;
+        }
+
+        if (pieceColor !== turn) return false;
 
         if (piece[1] === 'K' && Math.abs(tC - fC) === 2) {
             const kingMoved = turn === 'white' ? hasMoved.wK : hasMoved.bK;
@@ -240,11 +248,6 @@ const GameLogic = {
             for (let col of path) {
                 if (board[fR][col] !== '.' || this.isSquareAttacked(fR, col, turn === 'white' ? 'black' : 'white', board, enPassant)) return false;
             }
-            return true;
-        }
-
-        // In sandbox mode with free movement enabled, allow any piece to move to any square
-        if (this.isSandboxMode && this.sandboxFreeMovementEnabled && board === this.boardState) {
             return true;
         }
 
