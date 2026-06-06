@@ -134,6 +134,25 @@
             </div>
 
             <div class="side-panel">
+                <div id="sandbox-sections" class="hidden">
+                    <div class="sandbox-section">
+                        <h3 class="side-panel-title">Settings</h3>
+                        <div class="sandbox-controls">
+                            <button id="sandbox-timer-btn" class="control-btn full-width">Timer</button>
+                            <button id="sandbox-rules-btn" class="control-btn full-width">Rules</button>
+                            <button id="sandbox-win-btn" class="control-btn full-width">Win Conditions</button>
+                        </div>
+                    </div>
+
+                    <div class="sandbox-section" style="margin-top: 20px;">
+                        <h3 class="side-panel-title">Spawn</h3>
+                        <div class="sandbox-controls">
+                            <button id="spawn-pieces-btn" class="control-btn full-width">Pieces</button>
+                            <button id="spawn-blocks-btn" class="control-btn full-width">Blocks</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="history-section" class="move-history">
                     <h3 class="side-panel-title">Move History</h3>
                     <div id="move-list" class="move-list"></div>
@@ -153,25 +172,6 @@
                 </div>
                 <div id="game-controls" class="side-panel-controls">
                     <button id="undo-btn" class="control-btn">↶ Undo</button>
-                </div>
-            </div>
-
-            <div id="sandbox-panel" class="sandbox-panel hidden">
-                <div class="sandbox-section">
-                    <h3 class="side-panel-title">Settings</h3>
-                    <div class="sandbox-controls">
-                        <button id="sandbox-timer-btn" class="control-btn full-width">Timer</button>
-                        <button id="sandbox-rules-btn" class="control-btn full-width">Rules</button>
-                        <button id="sandbox-win-btn" class="control-btn full-width">Win Conditions</button>
-                    </div>
-                </div>
-
-                <div class="sandbox-section">
-                    <h3 class="side-panel-title">Spawn</h3>
-                    <div class="sandbox-controls">
-                        <button id="spawn-pieces-btn" class="control-btn full-width">Pieces</button>
-                        <button id="spawn-blocks-btn" class="control-btn full-width">Blocks</button>
-                    </div>
                 </div>
 
                 <!-- Piece Palette (Initially Hidden) -->

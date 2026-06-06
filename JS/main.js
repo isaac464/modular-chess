@@ -488,14 +488,14 @@ const GamemodeManager = {
 
             // Show/hide panels based on gamemode
             const historyPanel = document.getElementById('history-section');
-            const sandboxPanel = document.getElementById('sandbox-panel');
+            const sandboxSections = document.getElementById('sandbox-sections');
 
-            if (this.gamemodes[this.currentMode].showSandboxPanel) {
+            if (this.currentMode && this.gamemodes[this.currentMode].showSandboxPanel) {
                 if (historyPanel) historyPanel.classList.add('hidden');
-                if (sandboxPanel) sandboxPanel.classList.remove('hidden');
+                if (sandboxSections) sandboxSections.classList.remove('hidden');
             } else {
                 if (historyPanel) historyPanel.classList.remove('hidden');
-                if (sandboxPanel) sandboxPanel.classList.add('hidden');
+                if (sandboxSections) sandboxSections.classList.add('hidden');
             }
 
             // Sync board UI controls with active settings
