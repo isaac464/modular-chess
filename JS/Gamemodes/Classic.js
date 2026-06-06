@@ -1,6 +1,6 @@
 const ClassicGamemode = {
     name: 'Classic Chess',
-    description: 'Play traditional chess with no time limit',
+    description: 'Play traditional chess with optional time limits',
     availableSettings: [
         {
             id: 'auto-flip',

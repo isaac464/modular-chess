@@ -56,6 +56,7 @@ const GameLogic = {
         this.moveLog = [];
         this.lastMove = null;
         this.stopTimer();
+        this.timerEnabled = false;
         this.whiteTime = 600;
         this.blackTime = 600;
     },
@@ -82,6 +83,7 @@ const GameLogic = {
         this.moveLog = [];
         this.lastMove = null;
         this.stopTimer();
+        this.timerEnabled = false;
     },
 
     isInCheck(color, customBoard = this.boardState, enPassant = this.enPassantTarget) {

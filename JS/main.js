@@ -92,7 +92,8 @@ const GamemodeManager = {
         autoFlip: false,
         freeMovement: false,
         emptyBoard: false,
-        botDifficulty: 'none'
+        botDifficulty: 'none',
+        timeLimit: 'none'
     },
     selectedPalettePiece: null,
 
@@ -670,7 +671,8 @@ const GamemodeManager = {
                 autoFlip: false,
                 freeMovement: false,
                 emptyBoard: false,
-                botDifficulty: 'none'
+                botDifficulty: 'none',
+                timeLimit: 'none'
             };
 
             // Reset perspective UI
