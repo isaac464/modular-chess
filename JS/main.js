@@ -92,92 +92,18 @@ const GamemodeManager = {
         autoFlip: false,
         freeMovement: false,
         emptyBoard: false,
-        botDifficulty: 'none'
+        botDifficulty: 'none',
+        timeLimit: 'none'
     },
+    selectedPalettePiece: null,
 
-    gamemodes: {
-        classic: {
-            name: 'Classic Chess',
-            description: 'Play traditional chess with no time limit',
-            availableSettings: [
-                {
-                    id: 'auto-flip',
-                    name: 'Auto-flip Board',
-                    description: 'Perspective automatically shifts to the current player',
-                    type: 'checkbox',
-                    default: false
-                },
-                {
-                    id: 'bot-difficulty',
-                    name: 'Opponent',
-                    description: 'Select difficulty level',
-                    type: 'select',
-                    options: [
-                        { value: 'none', label: 'Human' },
-                        { value: 'easy', label: 'Bot (Easy)' },
-                        { value: 'medium', label: 'Bot (Medium)' },
-                        { value: 'hard', label: 'Bot (Hard)' }
-                    ],
-                    default: 'none'
-                }
-            ],
-            engineSettings: {
-                sandboxMode: false
-            }
-        },
-        sandbox: {
-            name: 'Sandbox',
-            description: 'Free placement mode. Create custom positions.',
-            availableSettings: [
-                {
-                    id: 'auto-flip',
-                    name: 'Auto-flip Board',
-                    description: 'Perspective automatically shifts to the current player',
-                    type: 'checkbox',
-                    default: false
-                },
-                {
-                    id: 'free-movement',
-                    name: 'Free Piece Movement',
-                    description: 'Move any piece anywhere without chess rules',
-                    type: 'checkbox',
-                    default: false
-                },
-                {
-                    id: 'empty-board',
-                    name: 'Start with Empty Board',
-                    description: 'Begin with a completely empty board instead of starting position',
-                    type: 'checkbox',
-                    default: false
-                }
-            ],
-            engineSettings: {
-                sandboxMode: true
-            }
-        }
-        // Add more gamemodes here in the future:
-        // blitz: {
-        //     name: 'Blitz Chess',
-        //     description: 'Fast-paced chess with 5-minute time limits',
-        //     settings: {
-        //         timeLimit: 300000, // 5 minutes in milliseconds
-        //         movesLimit: null,
-        //         customRules: false
-        //     }
-        // },
-        // puzzle: {
-        //     name: 'Puzzle Mode',
-        //     description: 'Solve chess puzzles and improve your tactical skills',
-        //     settings: {
-        //         timeLimit: null,
-        //         movesLimit: null,
-        //         customRules: true,
-        //         puzzleMode: true
-        //     }
-        // }
-    },
+    gamemodes: {},
 
     init() {
+        this.gamemodes = {
+            classic: ClassicGamemode,
+            sandbox: SandboxGamemode
+        };
         this.setupEventListeners();
         AnalysisManager.init();
     },
@@ -274,6 +200,66 @@ const GamemodeManager = {
                 BoardRenderer.render();
             });
         }
+
+        // Sandbox Palette event listeners
+        const spawnPiecesBtn = document.getElementById('spawn-pieces-btn');
+        const closePaletteBtn = document.getElementById('close-palette-btn');
+        const palettePieces = document.querySelectorAll('.palette-piece');
+
+        if (spawnPiecesBtn) {
+            spawnPiecesBtn.addEventListener('click', () => {
+                document.getElementById('piece-palette').classList.remove('hidden');
+            });
+        }
+
+        if (closePaletteBtn) {
+            closePaletteBtn.addEventListener('click', () => {
+                document.getElementById('piece-palette').classList.add('hidden');
+                this.selectedPalettePiece = null;
+                palettePieces.forEach(p => p.classList.remove('active'));
+            });
+        }
+
+        palettePieces.forEach(piece => {
+            piece.addEventListener('click', () => {
+                palettePieces.forEach(p => p.classList.remove('active'));
+                if (this.selectedPalettePiece === piece.dataset.piece) {
+                    this.selectedPalettePiece = null;
+                } else {
+                    this.selectedPalettePiece = piece.dataset.piece;
+                    piece.classList.add('active');
+                }
+            });
+        });
+
+        // Sandbox Timer Button
+        const sandboxTimerBtn = document.getElementById('sandbox-timer-btn');
+        if (sandboxTimerBtn) {
+            sandboxTimerBtn.addEventListener('click', () => {
+                if (GameLogic.timerEnabled) {
+                    GameLogic.timerEnabled = false;
+                    GameLogic.stopTimer();
+                } else {
+                    GameLogic.timerEnabled = true;
+                    // Default to 10 mins if not set
+                    if (GameLogic.whiteTime <= 0) GameLogic.whiteTime = 600;
+                    if (GameLogic.blackTime <= 0) GameLogic.blackTime = 600;
+                    GameLogic.startTimer();
+                }
+                BoardRenderer.updateTimerDisplay();
+            });
+        }
+
+        // Placeholder for new sandbox settings
+        const placeholderBtns = ['sandbox-rules-btn', 'sandbox-win-btn', 'spawn-blocks-btn'];
+        placeholderBtns.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    console.log(`${id} clicked - Feature coming soon!`);
+                });
+            }
+        });
     },
 
     selectGamemode(mode) {
@@ -370,11 +356,11 @@ const GamemodeManager = {
             let settingsToShow = config.availableSettings;
             if (mode === 'classic' && this.currentGameType) {
                 if (this.currentGameType === 'local') {
-                    // Local: only show auto-flip
-                    settingsToShow = config.availableSettings.filter(s => s.id === 'auto-flip');
+                    // Local: only show auto-flip and time-limit
+                    settingsToShow = config.availableSettings.filter(s => s.id === 'auto-flip' || s.id === 'time-limit');
                 } else if (this.currentGameType === 'bot') {
-                    // Vs Bot: only show bot difficulty (without Human option)
-                    settingsToShow = config.availableSettings.filter(s => s.id === 'bot-difficulty');
+                    // Vs Bot: only show bot difficulty and time-limit
+                    settingsToShow = config.availableSettings.filter(s => s.id === 'bot-difficulty' || s.id === 'time-limit');
                     // Remove 'none' option from bot difficulty
                     settingsToShow = settingsToShow.map(setting => ({
                         ...setting,
@@ -456,6 +442,15 @@ const GamemodeManager = {
     startGameFromSettings() {
         const config = this.gamemodes[this.currentMode];
 
+        // Reset active settings
+        this.activeSettings = {
+            autoFlip: false,
+            freeMovement: false,
+            emptyBoard: false,
+            botDifficulty: 'none',
+            timeLimit: 'none'
+        };
+
         // Collect setting values
         config.availableSettings.forEach(setting => {
             const element = document.getElementById(`setting-${setting.id}`);
@@ -467,6 +462,7 @@ const GamemodeManager = {
                     if (setting.id === 'empty-board') this.activeSettings.emptyBoard = element.checked;
                 } else if (setting.type === 'select') {
                     if (setting.id === 'bot-difficulty') this.activeSettings.botDifficulty = element.value;
+                    if (setting.id === 'time-limit') this.activeSettings.timeLimit = element.value;
                 }
             }
         });
@@ -520,11 +516,27 @@ const GamemodeManager = {
                 titleDisplay.textContent = this.gamemodes[this.currentMode].name;
             }
 
+            // Show/hide panels based on gamemode
+            this.updatePanelVisibility();
+
             // Sync board UI controls with active settings
             this.updateFlipButtonVisibility();
 
             // Initialize the chess board with gamemode settings
             this.initializeBoard();
+        }
+    },
+
+    updatePanelVisibility() {
+        const historyPanel = document.getElementById('history-section');
+        const sandboxSections = document.getElementById('sandbox-sections');
+
+        if (this.currentMode && this.gamemodes[this.currentMode].showSandboxPanel) {
+            if (historyPanel) historyPanel.classList.add('hidden');
+            if (sandboxSections) sandboxSections.classList.remove('hidden');
+        } else {
+            if (historyPanel) historyPanel.classList.remove('hidden');
+            if (sandboxSections) sandboxSections.classList.add('hidden');
         }
     },
 
@@ -540,6 +552,9 @@ const GamemodeManager = {
     },
 
     initializeBoard() {
+        // Ensure UI panels are correctly shown/hidden
+        this.updatePanelVisibility();
+
         // Initialize the classic chess board with current gamemode settings
         console.log(`Initializing classic board with ${this.currentMode} mode settings`, this.currentSettings);
 
@@ -591,10 +606,24 @@ const GamemodeManager = {
         // Apply the current gamemode settings to the game engine
         const settings = this.currentSettings;
 
+        // Apply timer settings
+        if (this.activeSettings.timeLimit !== 'none') {
+            const timeSeconds = parseInt(this.activeSettings.timeLimit);
+            GameLogic.timerEnabled = true;
+            GameLogic.whiteTime = timeSeconds;
+            GameLogic.blackTime = timeSeconds;
+            GameLogic.startTimer();
+        } else {
+            GameLogic.timerEnabled = false;
+            GameLogic.stopTimer();
+        }
+
         // Apply sandbox mode
         if (settings.sandboxMode) {
             GameLogic.isSandboxMode = true;
             GameLogic.sandboxFreeMovementEnabled = this.activeSettings.freeMovement;
+            this.selectedPalettePiece = null;
+            document.querySelectorAll('.palette-piece').forEach(p => p.classList.remove('active'));
         } else {
             GameLogic.isSandboxMode = false;
             GameLogic.sandboxFreeMovementEnabled = false;
@@ -628,6 +657,9 @@ const GamemodeManager = {
             // Reset gamemode settings
             GameLogic.isSandboxMode = false;
             GameLogic.sandboxFreeMovementEnabled = false;
+            this.selectedPalettePiece = null;
+            document.querySelectorAll('.palette-piece').forEach(p => p.classList.remove('active'));
+            document.getElementById('piece-palette').classList.add('hidden');
 
             // Reset current mode and settings
             this.currentMode = null;
@@ -639,7 +671,8 @@ const GamemodeManager = {
                 autoFlip: false,
                 freeMovement: false,
                 emptyBoard: false,
-                botDifficulty: 'none'
+                botDifficulty: 'none',
+                timeLimit: 'none'
             };
 
             // Reset perspective UI

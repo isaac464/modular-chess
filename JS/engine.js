@@ -25,6 +25,12 @@ const GameLogic = {
     moveLog: [], // Track moves in notation for UI
     lastMove: null, // Track last move for highlighting {fromRow, fromCol, toRow, toCol}
 
+    // Timer state
+    timerEnabled: false,
+    whiteTime: 600, // in seconds
+    blackTime: 600,
+    timerInterval: null,
+
     getPieceAt(row, col) { return this.boardState[row][col]; },
 
     resetBoard() {
@@ -49,6 +55,10 @@ const GameLogic = {
         this.moveHistory = [];
         this.moveLog = [];
         this.lastMove = null;
+        this.stopTimer();
+        this.timerEnabled = false;
+        this.whiteTime = 600;
+        this.blackTime = 600;
     },
 
     clearBoard() {
@@ -72,6 +82,8 @@ const GameLogic = {
         this.moveHistory = [];
         this.moveLog = [];
         this.lastMove = null;
+        this.stopTimer();
+        this.timerEnabled = false;
     },
 
     isInCheck(color, customBoard = this.boardState, enPassant = this.enPassantTarget) {
@@ -165,6 +177,7 @@ const GameLogic = {
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
         this.checkGameState();
+        if (this.timerEnabled) this.startTimer();
 
         // Record move notation after state change for check/mate detection
         this.recordMove(piece, fromRow, fromCol, toRow, toCol, targetPiece);
@@ -390,4 +403,44 @@ const GameLogic = {
         }
         return count >= 2; // 2 in history + current = 3 total
     },
+
+    startTimer() {
+        if (!this.timerEnabled || this.gameState) return;
+        this.stopTimer();
+        this.timerInterval = setInterval(() => {
+            if (this.turn === 'white') {
+                this.whiteTime--;
+                if (this.whiteTime <= 0) {
+                    this.whiteTime = 0;
+                    this.gameState = 'black-won';
+                    this.stopTimer();
+                    BoardRenderer.render();
+                }
+            } else {
+                this.blackTime--;
+                if (this.blackTime <= 0) {
+                    this.blackTime = 0;
+                    this.gameState = 'white-won';
+                    this.stopTimer();
+                    BoardRenderer.render();
+                }
+            }
+            // We need a way to update the UI without full re-render
+            this.updateTimerUI();
+        }, 1000);
+    },
+
+    stopTimer() {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
+        }
+    },
+
+    updateTimerUI() {
+        // This will be called by the interval to update the display
+        if (typeof BoardRenderer !== 'undefined' && BoardRenderer.updateTimerDisplay) {
+            BoardRenderer.updateTimerDisplay();
+        }
+    }
 };

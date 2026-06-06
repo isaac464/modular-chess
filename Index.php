@@ -114,7 +114,13 @@
     <div id="board-screen" class="board-screen hidden">
         <div class="board-header">
             <button id="back-button" class="back-button">← Back to Menu</button>
-            <h2 id="gamemode-title-display" class="gamemode-display">Classic Chess</h2>
+            <div class="header-center">
+                <h2 id="gamemode-title-display" class="gamemode-display">Classic Chess</h2>
+                <div id="game-timers" class="game-timers hidden">
+                    <div id="white-timer" class="timer">W: 10:00</div>
+                    <div id="black-timer" class="timer">B: 10:00</div>
+                </div>
+            </div>
             <div class="board-controls">
                 <button id="flip-board-btn" class="control-btn" title="Flip Board Perspective">🔄 Flip Board</button>
             </div>
@@ -134,6 +140,25 @@
             </div>
 
             <div class="side-panel">
+                <div id="sandbox-sections" class="hidden">
+                    <div class="sandbox-section">
+                        <h3 class="side-panel-title">Settings</h3>
+                        <div class="sandbox-controls">
+                            <button id="sandbox-timer-btn" class="control-btn full-width">Timer</button>
+                            <button id="sandbox-rules-btn" class="control-btn full-width">Rules</button>
+                            <button id="sandbox-win-btn" class="control-btn full-width">Win Conditions</button>
+                        </div>
+                    </div>
+
+                    <div class="sandbox-section" style="margin-top: 20px;">
+                        <h3 class="side-panel-title">Spawn</h3>
+                        <div class="sandbox-controls">
+                            <button id="spawn-pieces-btn" class="control-btn full-width">Pieces</button>
+                            <button id="spawn-blocks-btn" class="control-btn full-width">Blocks</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="history-section" class="move-history">
                     <h3 class="side-panel-title">Move History</h3>
                     <div id="move-list" class="move-list"></div>
@@ -154,6 +179,28 @@
                 <div id="game-controls" class="side-panel-controls">
                     <button id="undo-btn" class="control-btn">↶ Undo</button>
                 </div>
+
+                <!-- Piece Palette (Initially Hidden) -->
+                <div id="piece-palette" class="piece-palette hidden">
+                    <div class="palette-group">
+                        <div class="palette-piece" data-piece="wP">♙</div>
+                        <div class="palette-piece" data-piece="wN">♘</div>
+                        <div class="palette-piece" data-piece="wB">♗</div>
+                        <div class="palette-piece" data-piece="wR">♖</div>
+                        <div class="palette-piece" data-piece="wQ">♕</div>
+                        <div class="palette-piece" data-piece="wK">♔</div>
+                    </div>
+                    <div class="palette-group">
+                        <div class="palette-piece" data-piece="bP">♟</div>
+                        <div class="palette-piece" data-piece="bN">♞</div>
+                        <div class="palette-piece" data-piece="bB">♝</div>
+                        <div class="palette-piece" data-piece="bR">♜</div>
+                        <div class="palette-piece" data-piece="bQ">♛</div>
+                        <div class="palette-piece" data-piece="bK">♚</div>
+                        <div class="palette-piece" data-piece="." title="Eraser">❌</div>
+                    </div>
+                    <button id="close-palette-btn" class="control-btn">Close</button>
+                </div>
             </div>
         </div>
 
@@ -171,6 +218,8 @@
     <script src="JS/pieces.js"></script>
     <script src="JS/engine.js"></script>
     <script src="JS/Bots/bot.js"></script>
+    <script src="JS/Gamemodes/Classic.js"></script>
+    <script src="JS/Gamemodes/Sandbox.js"></script>
     <script src="JS/board.js"></script>
     <script src="JS/main.js"></script>
 </body>
