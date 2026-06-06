@@ -11,6 +11,10 @@ const BoardRenderer = {
     arrows: [],
     lastMoveProcessed: null,
 
+    // Pagination
+    historyPage: 1,
+    movesPerPage: 10, // Standard board size
+
     init() {
         this.svgContainer = document.getElementById('arrow-svg');
         this.setupGlobalListeners();
@@ -239,7 +243,22 @@ const BoardRenderer = {
         if (!moveList) return;
 
         moveList.innerHTML = '';
-        for (let i = 0; i < GameLogic.moveLog.length; i += 2) {
+        const totalFullMoves = Math.ceil(GameLogic.moveLog.length / 2);
+        const totalPages = Math.max(1, Math.ceil(totalFullMoves / this.movesPerPage));
+
+        // Automatically go to the last page if not analyzing and a new move was made
+        if (!AnalysisManager.isAnalyzing) {
+            this.historyPage = totalPages;
+        }
+
+        // Ensure current page is valid
+        if (this.historyPage > totalPages) this.historyPage = totalPages;
+        if (this.historyPage < 1) this.historyPage = 1;
+
+        const startIndex = (this.historyPage - 1) * this.movesPerPage * 2;
+        const endIndex = Math.min(startIndex + this.movesPerPage * 2, GameLogic.moveLog.length);
+
+        for (let i = startIndex; i < endIndex; i += 2) {
             const row = document.createElement('div');
             row.className = 'move-row';
 
@@ -273,6 +292,8 @@ const BoardRenderer = {
             moveList.appendChild(row);
         }
 
+        this.updatePaginationUI(totalPages);
+
         // Auto-scroll to active move or bottom
         if (AnalysisManager.isAnalyzing) {
             const active = moveList.querySelector('.active-move');
@@ -280,6 +301,46 @@ const BoardRenderer = {
         } else {
             moveList.scrollTop = moveList.scrollHeight;
         }
+    },
+
+    updatePaginationUI(totalPages) {
+        const paginationContainer = document.getElementById('history-pagination');
+        if (!paginationContainer) return;
+
+        paginationContainer.innerHTML = '';
+
+        if (totalPages <= 1) {
+            paginationContainer.classList.add('hidden');
+            return;
+        }
+
+        paginationContainer.classList.remove('hidden');
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'page-btn';
+        prevBtn.innerText = '‹';
+        prevBtn.disabled = this.historyPage === 1;
+        prevBtn.onclick = () => {
+            this.historyPage--;
+            this.render();
+        };
+
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'page-info';
+        pageInfo.innerText = `Page ${this.historyPage} of ${totalPages}`;
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'page-btn';
+        nextBtn.innerText = '›';
+        nextBtn.disabled = this.historyPage === totalPages;
+        nextBtn.onclick = () => {
+            this.historyPage++;
+            this.render();
+        };
+
+        paginationContainer.appendChild(prevBtn);
+        paginationContainer.appendChild(pageInfo);
+        paginationContainer.appendChild(nextBtn);
     },
 
     showGameResult() {

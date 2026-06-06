@@ -137,6 +137,7 @@
                 <div id="history-section" class="move-history">
                     <h3 class="side-panel-title">Move History</h3>
                     <div id="move-list" class="move-list"></div>
+                    <div id="history-pagination" class="pagination-controls"></div>
                 </div>
                 <div id="analysis-controls" class="analysis-controls hidden">
                     <h3 class="side-panel-title">Analysis</h3>
