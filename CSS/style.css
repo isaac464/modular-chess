@@ -88,6 +88,40 @@ html, body {
     padding: 5px;
 }
 
+.pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 5px;
+    background-color: #1e1c1a;
+    border-top: 1px solid #3d3b38;
+}
+
+.page-btn {
+    background: #444;
+    color: white;
+    border: 1px solid #555;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #555;
+}
+
+.page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.page-info {
+    color: #777;
+    font-size: 0.9em;
+}
+
 .move-row {
     display: grid;
     grid-template-columns: 30px 1fr 1fr;

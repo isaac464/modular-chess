@@ -59,6 +59,13 @@ const AnalysisManager = {
     goToMove(index) {
         if (index < -1 || index >= GameLogic.moveLog.length) return;
         this.currentIndex = index;
+
+        // Automatically switch to the correct page for the selected move
+        if (index !== -1) {
+            const moveNumber = Math.floor(index / 2) + 1;
+            BoardRenderer.historyPage = Math.ceil(moveNumber / BoardRenderer.movesPerPage);
+        }
+
         BoardRenderer.render();
     },
 
@@ -539,6 +546,9 @@ const GamemodeManager = {
         // Apply gamemode-specific settings
         this.applyGamemodeSettings();
 
+        // Reset pagination
+        BoardRenderer.historyPage = 1;
+
         // Initialize the classic board renderer
         BoardRenderer.init();
 
@@ -607,6 +617,7 @@ const GamemodeManager = {
         if (gamemodeScreen && boardScreen) {
             // Reset board before hiding
             GameLogic.resetBoard();
+            BoardRenderer.historyPage = 1;
 
             boardScreen.classList.add('hidden');
             if (settingsScreen) settingsScreen.classList.add('hidden');
