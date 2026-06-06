@@ -96,12 +96,13 @@ const GamemodeManager = {
     },
     selectedPalettePiece: null,
 
-    gamemodes: {
-        classic: ClassicGamemode,
-        sandbox: SandboxGamemode
-    },
+    gamemodes: {},
 
     init() {
+        this.gamemodes = {
+            classic: ClassicGamemode,
+            sandbox: SandboxGamemode
+        };
         this.setupEventListeners();
         AnalysisManager.init();
     },
@@ -487,22 +488,26 @@ const GamemodeManager = {
             }
 
             // Show/hide panels based on gamemode
-            const historyPanel = document.getElementById('history-section');
-            const sandboxSections = document.getElementById('sandbox-sections');
-
-            if (this.currentMode && this.gamemodes[this.currentMode].showSandboxPanel) {
-                if (historyPanel) historyPanel.classList.add('hidden');
-                if (sandboxSections) sandboxSections.classList.remove('hidden');
-            } else {
-                if (historyPanel) historyPanel.classList.remove('hidden');
-                if (sandboxSections) sandboxSections.classList.add('hidden');
-            }
+            this.updatePanelVisibility();
 
             // Sync board UI controls with active settings
             this.updateFlipButtonVisibility();
 
             // Initialize the chess board with gamemode settings
             this.initializeBoard();
+        }
+    },
+
+    updatePanelVisibility() {
+        const historyPanel = document.getElementById('history-section');
+        const sandboxSections = document.getElementById('sandbox-sections');
+
+        if (this.currentMode && this.gamemodes[this.currentMode].showSandboxPanel) {
+            if (historyPanel) historyPanel.classList.add('hidden');
+            if (sandboxSections) sandboxSections.classList.remove('hidden');
+        } else {
+            if (historyPanel) historyPanel.classList.remove('hidden');
+            if (sandboxSections) sandboxSections.classList.add('hidden');
         }
     },
 
@@ -518,6 +523,9 @@ const GamemodeManager = {
     },
 
     initializeBoard() {
+        // Ensure UI panels are correctly shown/hidden
+        this.updatePanelVisibility();
+
         // Initialize the classic chess board with current gamemode settings
         console.log(`Initializing classic board with ${this.currentMode} mode settings`, this.currentSettings);
 
