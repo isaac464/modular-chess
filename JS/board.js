@@ -13,7 +13,7 @@ const BoardRenderer = {
 
     // Pagination
     historyPage: 1,
-    movesPerPage: 8, // Standard board size
+    movesPerPage: 10, // Standard board size
 
     init() {
         this.svgContainer = document.getElementById('arrow-svg');
