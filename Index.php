@@ -155,6 +155,47 @@
                     <button id="undo-btn" class="control-btn">↶ Undo</button>
                 </div>
             </div>
+
+            <div id="sandbox-panel" class="sandbox-panel hidden">
+                <div class="sandbox-section">
+                    <h3 class="side-panel-title">Settings</h3>
+                    <div class="sandbox-controls">
+                        <button id="sandbox-timer-btn" class="control-btn full-width">Timer</button>
+                        <button id="sandbox-rules-btn" class="control-btn full-width">Rules</button>
+                        <button id="sandbox-win-btn" class="control-btn full-width">Win Conditions</button>
+                    </div>
+                </div>
+
+                <div class="sandbox-section">
+                    <h3 class="side-panel-title">Spawn</h3>
+                    <div class="sandbox-controls">
+                        <button id="spawn-pieces-btn" class="control-btn full-width">Pieces</button>
+                        <button id="spawn-blocks-btn" class="control-btn full-width">Blocks</button>
+                    </div>
+                </div>
+
+                <!-- Piece Palette (Initially Hidden) -->
+                <div id="piece-palette" class="piece-palette hidden">
+                    <div class="palette-group">
+                        <div class="palette-piece" data-piece="wP">♙</div>
+                        <div class="palette-piece" data-piece="wN">♘</div>
+                        <div class="palette-piece" data-piece="wB">♗</div>
+                        <div class="palette-piece" data-piece="wR">♖</div>
+                        <div class="palette-piece" data-piece="wQ">♕</div>
+                        <div class="palette-piece" data-piece="wK">♔</div>
+                    </div>
+                    <div class="palette-group">
+                        <div class="palette-piece" data-piece="bP">♟</div>
+                        <div class="palette-piece" data-piece="bN">♞</div>
+                        <div class="palette-piece" data-piece="bB">♝</div>
+                        <div class="palette-piece" data-piece="bR">♜</div>
+                        <div class="palette-piece" data-piece="bQ">♛</div>
+                        <div class="palette-piece" data-piece="bK">♚</div>
+                        <div class="palette-piece" data-piece="." title="Eraser">❌</div>
+                    </div>
+                    <button id="close-palette-btn" class="control-btn">Close</button>
+                </div>
+            </div>
         </div>
 
         <div id="game-result" class="game-result hidden">
@@ -171,6 +212,8 @@
     <script src="JS/pieces.js"></script>
     <script src="JS/engine.js"></script>
     <script src="JS/Bots/bot.js"></script>
+    <script src="JS/Gamemodes/Classic.js"></script>
+    <script src="JS/Gamemodes/Sandbox.js"></script>
     <script src="JS/board.js"></script>
     <script src="JS/main.js"></script>
 </body>

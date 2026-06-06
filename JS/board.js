@@ -366,6 +366,13 @@ const BoardRenderer = {
         // Prevent human move during bot's turn in Classic mode
         if (GamemodeManager.activeSettings.botDifficulty !== 'none' && GameLogic.turn === 'black') return;
 
+        // Sandbox Piece Spawning
+        if (GameLogic.isSandboxMode && GamemodeManager.selectedPalettePiece) {
+            GameLogic.boardState[row][col] = GamemodeManager.selectedPalettePiece;
+            this.render();
+            return;
+        }
+
         const selected = GameLogic.selectedSquare;
         if (selected) {
             const moveResult = GameLogic.movePiece(selected.row, selected.col, row, col);
