@@ -450,3 +450,45 @@ html, body {
 .palette-piece.active {
     background: #7b945d;
 }
+
+/* Timer Styling */
+.header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.game-timers {
+    display: flex;
+    gap: 15px;
+}
+
+.timer {
+    background: #1e1c1a;
+    color: #fff;
+    padding: 5px 15px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 1.2em;
+    font-weight: bold;
+    min-width: 80px;
+    text-align: center;
+    border: 1px solid #3d3b38;
+}
+
+.timer.active {
+    background: #7b945d;
+    border-color: #8db359;
+}
+
+.timer.low-time {
+    color: #ff4d4d;
+    animation: pulse-red 1s infinite;
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 77, 77, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
+}

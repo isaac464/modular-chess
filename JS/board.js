@@ -236,6 +236,41 @@ const BoardRenderer = {
         if (GameLogic.gameState) {
             this.showGameResult();
         }
+
+        this.updateTimerDisplay();
+    },
+
+    updateTimerDisplay() {
+        const timerContainer = document.getElementById('game-timers');
+        if (!timerContainer) return;
+
+        if (!GameLogic.timerEnabled) {
+            timerContainer.classList.add('hidden');
+            return;
+        }
+
+        timerContainer.classList.remove('hidden');
+
+        const formatTime = (seconds) => {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        const whiteTimer = document.getElementById('white-timer');
+        const blackTimer = document.getElementById('black-timer');
+
+        if (whiteTimer) {
+            whiteTimer.innerText = `W: ${formatTime(GameLogic.whiteTime)}`;
+            whiteTimer.classList.toggle('active', GameLogic.turn === 'white' && !GameLogic.gameState);
+            whiteTimer.classList.toggle('low-time', GameLogic.whiteTime <= 30);
+        }
+
+        if (blackTimer) {
+            blackTimer.innerText = `B: ${formatTime(GameLogic.blackTime)}`;
+            blackTimer.classList.toggle('active', GameLogic.turn === 'black' && !GameLogic.gameState);
+            blackTimer.classList.toggle('low-time', GameLogic.blackTime <= 30);
+        }
     },
 
     updateMoveHistoryUI() {

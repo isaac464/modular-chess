@@ -114,7 +114,13 @@
     <div id="board-screen" class="board-screen hidden">
         <div class="board-header">
             <button id="back-button" class="back-button">← Back to Menu</button>
-            <h2 id="gamemode-title-display" class="gamemode-display">Classic Chess</h2>
+            <div class="header-center">
+                <h2 id="gamemode-title-display" class="gamemode-display">Classic Chess</h2>
+                <div id="game-timers" class="game-timers hidden">
+                    <div id="white-timer" class="timer">W: 10:00</div>
+                    <div id="black-timer" class="timer">B: 10:00</div>
+                </div>
+            </div>
             <div class="board-controls">
                 <button id="flip-board-btn" class="control-btn" title="Flip Board Perspective">🔄 Flip Board</button>
             </div>
