@@ -45,6 +45,8 @@ const AnalysisManager = {
 
     exitAnalysis() {
         this.isAnalyzing = false;
+        this.currentIndex = -1;
+        this.history = [];
         document.getElementById('game-controls').classList.remove('hidden');
         document.getElementById('analysis-controls').classList.add('hidden');
 
@@ -53,7 +55,9 @@ const AnalysisManager = {
             gameResultDiv.style.display = '';
         }
 
-        BoardRenderer.render();
+        if (typeof BoardRenderer !== 'undefined') {
+            BoardRenderer.render();
+        }
     },
 
     goToMove(index) {
@@ -711,6 +715,9 @@ const GamemodeManager = {
             this.currentMode = null;
             this.currentSettings = null;
             this.currentGameType = null;
+
+            // Reset analysis state
+            AnalysisManager.exitAnalysis();
 
             // Reset active settings
             this.activeSettings = {
