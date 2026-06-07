@@ -97,6 +97,7 @@ const GamemodeManager = {
         freeMovement: false,
         emptyBoard: false,
         botDifficulty: 'none',
+        playerColor: 'white',
         timeLimit: 'none'
     },
     selectedPalettePiece: null,
@@ -377,8 +378,8 @@ const GamemodeManager = {
                     // Local: only show auto-flip and time-limit
                     settingsToShow = config.availableSettings.filter(s => s.id === 'auto-flip' || s.id === 'time-limit');
                 } else if (this.currentGameType === 'bot') {
-                    // Vs Bot: only show bot difficulty and time-limit
-                    settingsToShow = config.availableSettings.filter(s => s.id === 'bot-difficulty' || s.id === 'time-limit');
+                    // Vs Bot: show bot difficulty, player color, and time-limit
+                    settingsToShow = config.availableSettings.filter(s => s.id === 'bot-difficulty' || s.id === 'player-color' || s.id === 'time-limit');
                     // Remove 'none' option from bot difficulty
                     settingsToShow = settingsToShow.map(setting => ({
                         ...setting,
@@ -488,6 +489,7 @@ const GamemodeManager = {
             freeMovement: false,
             emptyBoard: false,
             botDifficulty: 'none',
+            playerColor: 'white',
             timeLimit: 'none'
         };
 
@@ -502,6 +504,7 @@ const GamemodeManager = {
                     if (setting.id === 'empty-board') this.activeSettings.emptyBoard = element.checked;
                 } else if (setting.type === 'select') {
                     if (setting.id === 'bot-difficulty') this.activeSettings.botDifficulty = element.value;
+                    if (setting.id === 'player-color') this.activeSettings.playerColor = element.value;
                     if (setting.id === 'time-limit') this.activeSettings.timeLimit = element.value;
                 }
             }
@@ -510,6 +513,12 @@ const GamemodeManager = {
         // Enforce constraints
         if (this.currentMode === 'classic' && this.activeSettings.botDifficulty !== 'none') {
             this.activeSettings.autoFlip = false;
+
+            // Handle random color selection
+            if (this.activeSettings.playerColor === 'random') {
+                this.activeSettings.playerColor = Math.random() < 0.5 ? 'white' : 'black';
+                console.log(`Randomly assigned player color: ${this.activeSettings.playerColor}`);
+            }
         }
 
         // Handle board initialization based on settings
@@ -622,9 +631,10 @@ const GamemodeManager = {
     },
 
     async checkBotMove() {
-        if (this.activeSettings.botDifficulty !== 'none' && GameLogic.turn === 'black' && !GameLogic.isPromoting) {
+        const botColor = this.activeSettings.playerColor === 'white' ? 'black' : 'white';
+        if (this.activeSettings.botDifficulty !== 'none' && GameLogic.turn === botColor && !GameLogic.isPromoting) {
             console.log("Bot is thinking...");
-            await ChessBot.makeMove(this.activeSettings.botDifficulty, 'black');
+            await ChessBot.makeMove(this.activeSettings.botDifficulty, botColor);
             console.log("Bot move completed");
         }
     },
@@ -636,7 +646,7 @@ const GamemodeManager = {
         if (this.activeSettings.botDifficulty !== 'none') {
             // If it's currently human's turn, bot just moved, so undo two steps (bot's and player's)
             // If it's currently bot's turn (waiting for bot), just undo one (player's)
-            if (GameLogic.turn === 'white') {
+            if (GameLogic.turn === this.activeSettings.playerColor) {
                 GameLogic.undoMove();
                 GameLogic.undoMove();
             } else {
@@ -650,6 +660,9 @@ const GamemodeManager = {
         // Prevent animation on undo
         BoardRenderer.lastMoveProcessed = GameLogic.lastMove;
         BoardRenderer.render();
+
+        // Check if the bot needs to move (e.g. after undoing a move)
+        this.checkBotMove();
     },
 
     applyGamemodeSettings() {
@@ -683,6 +696,8 @@ const GamemodeManager = {
         GameLogic.autoFlip = this.activeSettings.autoFlip;
         if (GameLogic.autoFlip) {
             GameLogic.perspective = GameLogic.turn;
+        } else if (this.activeSettings.botDifficulty !== 'none') {
+            GameLogic.perspective = this.activeSettings.playerColor;
         }
     },
 
