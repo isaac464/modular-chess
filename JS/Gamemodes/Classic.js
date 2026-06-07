@@ -23,6 +23,18 @@ const ClassicGamemode = {
             default: 'none'
         },
         {
+            id: 'player-color',
+            name: 'Play as',
+            description: 'Select your color',
+            type: 'select',
+            options: [
+                { value: 'white', label: 'White' },
+                { value: 'black', label: 'Black' },
+                { value: 'random', label: 'Random' }
+            ],
+            default: 'white'
+        },
+        {
             id: 'time-limit',
             name: 'Time Limit',
             description: 'Select time limit per player',
