@@ -399,7 +399,8 @@ const BoardRenderer = {
         if (GameLogic.isPromoting) return;
 
         // Prevent human move during bot's turn in Classic mode
-        if (GamemodeManager.activeSettings.botDifficulty !== 'none' && GameLogic.turn === 'black') return;
+        const botColor = GamemodeManager.activeSettings.playerColor === 'white' ? 'black' : 'white';
+        if (GamemodeManager.activeSettings.botDifficulty !== 'none' && GameLogic.turn === botColor) return;
 
         const isFreeMovement = GameLogic.isSandboxMode && GameLogic.sandboxFreeMovementEnabled;
 
