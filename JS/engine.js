@@ -29,6 +29,8 @@ const GameLogic = {
     timerEnabled: false,
     whiteTime: 600, // in seconds
     blackTime: 600,
+    whiteTimeAtTurnStart: 600,
+    blackTimeAtTurnStart: 600,
     timerInterval: null,
 
     getPieceAt(row, col) { return this.boardState[row][col]; },
@@ -59,6 +61,8 @@ const GameLogic = {
         this.timerEnabled = false;
         this.whiteTime = 600;
         this.blackTime = 600;
+        this.whiteTimeAtTurnStart = 600;
+        this.blackTimeAtTurnStart = 600;
     },
 
     clearBoard() {
@@ -84,6 +88,8 @@ const GameLogic = {
         this.lastMove = null;
         this.stopTimer();
         this.timerEnabled = false;
+        this.whiteTimeAtTurnStart = this.whiteTime;
+        this.blackTimeAtTurnStart = this.blackTime;
     },
 
     isInCheck(color, customBoard = this.boardState, enPassant = this.enPassantTarget) {
@@ -177,7 +183,12 @@ const GameLogic = {
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
         this.checkGameState();
-        if (this.timerEnabled) this.startTimer();
+
+        if (this.timerEnabled) {
+            this.whiteTimeAtTurnStart = this.whiteTime;
+            this.blackTimeAtTurnStart = this.blackTime;
+            this.startTimer();
+        }
 
         // Record move notation after state change for check/mate detection
         this.recordMove(piece, fromRow, fromCol, toRow, toCol, targetPiece);
@@ -192,6 +203,12 @@ const GameLogic = {
         this.turn = this.turn === 'white' ? 'black' : 'white';
         if (this.autoFlip) this.perspective = this.turn;
         this.checkGameState();
+
+        if (this.timerEnabled) {
+            this.whiteTimeAtTurnStart = this.whiteTime;
+            this.blackTimeAtTurnStart = this.blackTime;
+            this.startTimer();
+        }
 
         // Update move notation for promotion
         if (this.moveLog.length > 0) {
@@ -339,7 +356,9 @@ const GameLogic = {
             enPassantTarget: this.enPassantTarget ? { ...this.enPassantTarget } : null,
             hasMoved: { ...this.hasMoved },
             lastMove: this.lastMove ? { ...this.lastMove } : null,
-            gameState: this.gameState
+            gameState: this.gameState,
+            whiteTime: this.whiteTimeAtTurnStart,
+            blackTime: this.blackTimeAtTurnStart
         };
     },
 
@@ -350,6 +369,10 @@ const GameLogic = {
         this.hasMoved = snapshot.hasMoved;
         this.lastMove = snapshot.lastMove;
         this.gameState = snapshot.gameState;
+        this.whiteTime = snapshot.whiteTime !== undefined ? snapshot.whiteTime : this.whiteTime;
+        this.blackTime = snapshot.blackTime !== undefined ? snapshot.blackTime : this.blackTime;
+        this.whiteTimeAtTurnStart = this.whiteTime;
+        this.blackTimeAtTurnStart = this.blackTime;
         this.isPromoting = false;
         this.promotionSquare = null;
     },
@@ -362,6 +385,11 @@ const GameLogic = {
         this.moveLog.pop();
 
         if (this.autoFlip) this.perspective = this.turn;
+
+        if (this.timerEnabled && !this.gameState) {
+            this.startTimer();
+        }
+
         return true;
     },
 

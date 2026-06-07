@@ -253,6 +253,8 @@ const GamemodeManager = {
                     // Default to 10 mins if not set
                     if (GameLogic.whiteTime <= 0) GameLogic.whiteTime = 600;
                     if (GameLogic.blackTime <= 0) GameLogic.blackTime = 600;
+                    GameLogic.whiteTimeAtTurnStart = GameLogic.whiteTime;
+                    GameLogic.blackTimeAtTurnStart = GameLogic.blackTime;
                     GameLogic.startTimer();
                 }
                 BoardRenderer.updateTimerDisplay();
@@ -675,6 +677,8 @@ const GamemodeManager = {
             GameLogic.timerEnabled = true;
             GameLogic.whiteTime = timeSeconds;
             GameLogic.blackTime = timeSeconds;
+            GameLogic.whiteTimeAtTurnStart = timeSeconds;
+            GameLogic.blackTimeAtTurnStart = timeSeconds;
             GameLogic.startTimer();
         } else {
             GameLogic.timerEnabled = false;
