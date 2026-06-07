@@ -247,7 +247,7 @@ const ChessBot = {
         };
 
         // Handle Castling
-        if (piece[1] === 'K' && Math.abs(move.tC - move.fC) === 2) {
+        if (piece[1] === 'K' && move.tR === move.fR && Math.abs(move.tC - move.fC) === 2) {
             const isKingside = move.tC > move.fC;
             const rookCol = isKingside ? 7 : 0;
             const rookDestCol = isKingside ? 5 : 3;
