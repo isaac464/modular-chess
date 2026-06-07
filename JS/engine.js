@@ -138,7 +138,7 @@ const GameLogic = {
         this.lastMove = { fromRow, fromCol, toRow, toCol, piece, captured: targetPiece, isEnPassant };
 
         // 2. Execute Special Moves (Castling/En Passant)
-        if (piece[1] === 'K' && Math.abs(toCol - fromCol) === 2) {
+        if (piece[1] === 'K' && toRow === fromRow && Math.abs(toCol - fromCol) === 2) {
             const isKingside = toCol > fromCol;
             const rookCol = isKingside ? 7 : 0;
             const rookDestCol = isKingside ? 5 : 3;
@@ -231,7 +231,7 @@ const GameLogic = {
 
         if (pieceColor !== turn) return false;
 
-        if (piece[1] === 'K' && Math.abs(tC - fC) === 2) {
+        if (piece[1] === 'K' && tR === fR && Math.abs(tC - fC) === 2) {
             const kingMoved = turn === 'white' ? hasMoved.wK : hasMoved.bK;
             if (kingMoved || this.isInCheck(turn, board, enPassant)) return false;
 
