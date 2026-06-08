@@ -1,3 +1,7 @@
+/**
+ * SandboxGamemode
+ * Configuration for the Sandbox experience, allowing custom setup and free piece movement.
+ */
 const SandboxGamemode = {
     name: 'Sandbox',
     description: 'Free placement mode. Create custom positions.',

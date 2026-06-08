@@ -1,5 +1,12 @@
+/**
+ * PieceMovement
+ * Stateless utility object for validating standard chess piece movement vectors.
+ * Does not check for King safety (Check).
+ */
 const PieceMovement = {
-    // Validates if a piece can physically reach a square, ignoring check safety
+    /**
+     * Entry point for piece-specific movement validation.
+     */
     validateBasicMove(fR, fC, tR, tC, boardState, enPassantTarget) {
         const piece = boardState[fR][fC];
         if (piece === '.') return false;

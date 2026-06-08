@@ -1,13 +1,23 @@
-// Analysis Manager
+/**
+ * AnalysisManager
+ * Handles the post-game analysis state, allowing users to navigate through
+ * the game's move history using stored state snapshots.
+ */
 const AnalysisManager = {
     isAnalyzing: false,
-    currentIndex: -1,
-    history: [],
+    currentIndex: -1, // Current move index being viewed (-1 is starting position)
+    history: [],      // Array of game state snapshots
 
+    /**
+     * Initialises the analysis manager and sets up UI listeners.
+     */
     init() {
         this.setupEventListeners();
     },
 
+    /**
+     * Attaches event listeners to the analysis navigation buttons.
+     */
     setupEventListeners() {
         const firstBtn = document.getElementById('analysis-first');
         const prevBtn = document.getElementById('analysis-prev');
@@ -22,13 +32,15 @@ const AnalysisManager = {
         if (exitBtn) exitBtn.addEventListener('click', () => this.exitAnalysis());
     },
 
+    /**
+     * Activates analysis mode, populating history snapshots and updating the UI.
+     */
     startAnalysis() {
         this.isAnalyzing = true;
         // history[0] = initial state
         // history[1...n] = states after moveLog[0...n-1]
         this.history = [...GameLogic.moveHistory, GameLogic.getGameStateSnapshot()];
 
-        // currentIndex = index into GameLogic.moveLog
         // Initial state is index -1, first move is index 0, last move is moveLog.length - 1
         this.currentIndex = GameLogic.moveLog.length - 1;
 
@@ -43,6 +55,9 @@ const AnalysisManager = {
         BoardRenderer.render();
     },
 
+    /**
+     * Exits analysis mode and returns the UI to the live game state (results screen).
+     */
     exitAnalysis() {
         this.isAnalyzing = false;
         this.currentIndex = -1;
@@ -60,11 +75,15 @@ const AnalysisManager = {
         }
     },
 
+    /**
+     * Navigates to a specific move in the history and triggers a board re-render.
+     * @param {number} index - The move index to navigate to.
+     */
     goToMove(index) {
         if (index < -1 || index >= GameLogic.moveLog.length) return;
         this.currentIndex = index;
 
-        // Automatically switch to the correct page for the selected move
+        // Automatically switch to the correct page for the selected move in the history list
         if (index !== -1) {
             const moveNumber = Math.floor(index / 2) + 1;
             BoardRenderer.historyPage = Math.ceil(moveNumber / BoardRenderer.movesPerPage);
@@ -73,12 +92,20 @@ const AnalysisManager = {
         BoardRenderer.render();
     },
 
+    /**
+     * Retrieves the board state for the current analysis index.
+     * @returns {Array} The 2D array representing the board state.
+     */
     getCurrentBoard() {
-        // Safe access: history[0] exists, and history[index+1] exists if index < moveLog.length
+        // Safe access: history[0] is the start state, history[index+1] is state after move 'index'
         const state = this.history[this.currentIndex + 1];
         return state ? state.boardState : this.history[0].boardState;
     },
 
+    /**
+     * Retrieves the last move data for the current analysis index to handle highlighting.
+     * @returns {Object|null} The last move object or null.
+     */
     getCurrentLastMove() {
         if (this.currentIndex === -1) return null;
         const state = this.history[this.currentIndex + 1];
@@ -86,12 +113,17 @@ const AnalysisManager = {
     }
 };
 
-// Gamemode Manager
+/**
+ * GamemodeManager
+ * Orchestrates gamemode selection, setting configuration, and game initialisation.
+ * Manages the transitions between various menu screens and the active board.
+ */
 const GamemodeManager = {
-    currentMode: null,
-    currentSettings: null,
-    currentGameType: null,
-    // Track selected settings for current game
+    currentMode: null,      // e.g., 'classic', 'sandbox'
+    currentSettings: null,  // Engine-specific setting flags
+    currentGameType: null,  // e.g., 'local', 'bot'
+
+    // Active configuration for the current match
     activeSettings: {
         autoFlip: false,
         freeMovement: false,
@@ -100,10 +132,13 @@ const GamemodeManager = {
         playerColor: 'white',
         timeLimit: 'none'
     },
-    selectedPalettePiece: null,
+    selectedPalettePiece: null, // Piece selected in Sandbox palette
 
     gamemodes: {},
 
+    /**
+     * Initialises the manager, registering available gamemodes.
+     */
     init() {
         this.gamemodes = {
             classic: ClassicGamemode,
@@ -113,6 +148,9 @@ const GamemodeManager = {
         AnalysisManager.init();
     },
 
+    /**
+     * Sets up event delegation and direct listeners for UI interactions.
+     */
     setupEventListeners() {
         // Gamemode card selection
         const gamemodeCards = document.querySelectorAll('.gamemode-card');
@@ -281,6 +319,10 @@ const GamemodeManager = {
         });
     },
 
+    /**
+     * Handles the selection of a primary gamemode.
+     * @param {string} mode - The mode identifier.
+     */
     selectGamemode(mode) {
         if (!this.gamemodes[mode]) {
             console.error('Invalid gamemode:', mode);
@@ -289,17 +331,18 @@ const GamemodeManager = {
 
         this.currentMode = mode;
         this.currentSettings = JSON.parse(JSON.stringify(this.gamemodes[mode].engineSettings));
-        console.log(`Selected gamemode: ${mode}`, this.currentSettings);
 
-        // For classic mode, show game type selection
+        // Classic mode requires an additional 'Game Type' step (Local vs Bot)
         if (mode === 'classic') {
             this.showGameTypeScreen();
         } else {
-            // For other modes, go directly to settings
             this.showSettings(mode);
         }
     },
 
+    /**
+     * Displays the game type selection screen (Local, Bot, Multiplayer).
+     */
     showGameTypeScreen() {
         const gamemodeScreen = document.getElementById('gamemode-screen');
         const gameTypeScreen = document.getElementById('game-type-screen');
@@ -310,6 +353,9 @@ const GamemodeManager = {
         }
     },
 
+    /**
+     * Closes the game type screen and returns to the main menu.
+     */
     closeGameTypeScreen() {
         const gamemodeScreen = document.getElementById('gamemode-screen');
         const gameTypeScreen = document.getElementById('game-type-screen');
@@ -318,28 +364,28 @@ const GamemodeManager = {
             gameTypeScreen.classList.add('hidden');
             gamemodeScreen.classList.remove('hidden');
 
-            // Reset current mode and game type
             this.currentMode = null;
             this.currentSettings = null;
             this.currentGameType = null;
         }
     },
 
+    /**
+     * Handles selection of a game type (Local vs Bot).
+     * @param {string} type - The game type identifier.
+     */
     selectGameType(type) {
         if (type === 'multiplayer') {
             this.showMultiplayerWip();
         } else {
-            // Store the current game type
             this.currentGameType = type;
             
-            // Apply game type to active settings
             if (type === 'local') {
                 this.activeSettings.botDifficulty = 'none';
             } else if (type === 'bot') {
-                this.activeSettings.botDifficulty = 'medium'; // Default difficulty
+                this.activeSettings.botDifficulty = 'medium';
             }
 
-            // Show settings screen
             this.showSettings(this.currentMode);
         }
     },
@@ -358,6 +404,10 @@ const GamemodeManager = {
         }
     },
 
+    /**
+     * Dynamically generates and displays the settings screen for a gamemode.
+     * @param {string} mode - The active gamemode.
+     */
     showSettings(mode) {
         const gamemodeScreen = document.getElementById('gamemode-screen');
         const gameTypeScreen = document.getElementById('game-type-screen');
@@ -371,24 +421,22 @@ const GamemodeManager = {
             settingsTitle.textContent = `${config.name} Settings`;
             settingsSubtitle.textContent = config.description;
 
-            // Filter settings based on game type for classic mode
+            // Filter settings based on context (e.g., Hide bot settings in local matches)
             let settingsToShow = config.availableSettings;
             if (mode === 'classic' && this.currentGameType) {
                 if (this.currentGameType === 'local') {
-                    // Local: only show auto-flip and time-limit
                     settingsToShow = config.availableSettings.filter(s => s.id === 'auto-flip' || s.id === 'time-limit');
                 } else if (this.currentGameType === 'bot') {
-                    // Vs Bot: show bot difficulty, player color, and time-limit
                     settingsToShow = config.availableSettings.filter(s => s.id === 'bot-difficulty' || s.id === 'player-color' || s.id === 'time-limit');
-                    // Remove 'none' option from bot difficulty
+                    // Ensure the 'none' (Human) option is excluded when explicitly playing VS Bot
                     settingsToShow = settingsToShow.map(setting => ({
                         ...setting,
-                        options: setting.options.filter(opt => opt.value !== 'none')
+                        options: (setting.options || []).filter(opt => opt.value !== 'none')
                     }));
                 }
             }
 
-            // Dynamically generate settings HTML
+            // Generate HTML for each setting (checkbox or select dropdown)
             settingsContent.innerHTML = '';
             settingsToShow.forEach(setting => {
                 const group = document.createElement('div');
@@ -421,23 +469,22 @@ const GamemodeManager = {
                 settingsContent.appendChild(group);
             });
 
-            // Hide appropriate screens
             if (mode === 'classic' && this.currentGameType) {
-                // Coming from game type screen
                 if (gameTypeScreen) gameTypeScreen.classList.add('hidden');
             } else {
-                // Coming from gamemode screen
                 if (gamemodeScreen) gamemodeScreen.classList.add('hidden');
             }
             settingsScreen.classList.remove('hidden');
 
-            // Add dynamic behavior for Sandbox settings
             if (mode === 'sandbox') {
                 this.updateSandboxSettingsUI();
             }
         }
     },
 
+    /**
+     * Updates Sandbox UI to disable conflicting settings (e.g., no timers in Free Movement).
+     */
     updateSandboxSettingsUI() {
         const freeMovementCheckbox = document.getElementById('setting-free-movement');
         const timeLimitSelect = document.getElementById('setting-time-limit');
@@ -480,10 +527,13 @@ const GamemodeManager = {
         }
     },
 
+    /**
+     * Finalises active settings from the UI and starts the match.
+     */
     startGameFromSettings() {
         const config = this.gamemodes[this.currentMode];
 
-        // Reset active settings
+        // Reset active settings to defaults before populating
         this.activeSettings = {
             autoFlip: false,
             freeMovement: false,
@@ -493,12 +543,11 @@ const GamemodeManager = {
             timeLimit: 'none'
         };
 
-        // Collect setting values
+        // Scrape values from the generated DOM elements
         config.availableSettings.forEach(setting => {
             const element = document.getElementById(`setting-${setting.id}`);
             if (element) {
                 if (setting.type === 'checkbox') {
-                    // Update internal state
                     if (setting.id === 'auto-flip') this.activeSettings.autoFlip = element.checked;
                     if (setting.id === 'free-movement') this.activeSettings.freeMovement = element.checked;
                     if (setting.id === 'empty-board') this.activeSettings.emptyBoard = element.checked;
@@ -510,18 +559,16 @@ const GamemodeManager = {
             }
         });
 
-        // Enforce constraints
+        // Enforce logic constraints (e.g., No auto-flip when playing against a bot)
         if (this.currentMode === 'classic' && this.activeSettings.botDifficulty !== 'none') {
             this.activeSettings.autoFlip = false;
 
-            // Handle random color selection
             if (this.activeSettings.playerColor === 'random') {
                 this.activeSettings.playerColor = Math.random() < 0.5 ? 'white' : 'black';
-                console.log(`Randomly assigned player color: ${this.activeSettings.playerColor}`);
             }
         }
 
-        // Handle board initialization based on settings
+        // Prepare the board state
         if (this.activeSettings.emptyBoard) {
             GameLogic.clearBoard();
         } else {
@@ -531,6 +578,9 @@ const GamemodeManager = {
         this.startGame();
     },
 
+    /**
+     * Shows the confirmation dialog when attempting to exit an active match.
+     */
     showExitConfirmation() {
         const confirmDialog = document.getElementById('exit-confirmation-dialog');
         if (confirmDialog) {
@@ -538,6 +588,9 @@ const GamemodeManager = {
         }
     },
 
+    /**
+     * Hides the exit confirmation dialog.
+     */
     cancelExit() {
         const confirmDialog = document.getElementById('exit-confirmation-dialog');
         if (confirmDialog) {
@@ -545,10 +598,16 @@ const GamemodeManager = {
         }
     },
 
+    /**
+     * Confirms match exit and returns to the menu.
+     */
     confirmExit() {
         this.returnToMenu();
     },
 
+    /**
+     * Switches the UI to the board screen and triggers engine initialisation.
+     */
     startGame() {
         const settingsScreen = document.getElementById('settings-screen');
         const gamemodeScreen = document.getElementById('gamemode-screen');
@@ -559,23 +618,20 @@ const GamemodeManager = {
             if (gamemodeScreen) gamemodeScreen.classList.add('hidden');
             boardScreen.classList.remove('hidden');
 
-            // Update the title in the board header
             const titleDisplay = document.getElementById('gamemode-title-display');
             if (titleDisplay && this.gamemodes[this.currentMode]) {
                 titleDisplay.textContent = this.gamemodes[this.currentMode].name;
             }
 
-            // Show/hide panels based on gamemode
             this.updatePanelVisibility();
-
-            // Sync board UI controls with active settings
             this.updateFlipButtonVisibility();
-
-            // Initialize the chess board with gamemode settings
             this.initializeBoard();
         }
     },
 
+    /**
+     * Toggles visibility of the side panel sections (History vs Sandbox controls).
+     */
     updatePanelVisibility() {
         const historyPanel = document.getElementById('history-section');
         const sandboxSections = document.getElementById('sandbox-sections');
@@ -584,14 +640,9 @@ const GamemodeManager = {
             if (historyPanel) historyPanel.classList.add('hidden');
             if (sandboxSections) sandboxSections.classList.remove('hidden');
 
-            // Handle Sandbox timer button visibility based on settings
             const sandboxTimerBtn = document.getElementById('sandbox-timer-btn');
             if (sandboxTimerBtn) {
-                if (this.activeSettings.freeMovement) {
-                    sandboxTimerBtn.classList.add('hidden');
-                } else {
-                    sandboxTimerBtn.classList.remove('hidden');
-                }
+                sandboxTimerBtn.classList.toggle('hidden', this.activeSettings.freeMovement);
             }
         } else {
             if (historyPanel) historyPanel.classList.remove('hidden');
@@ -599,53 +650,48 @@ const GamemodeManager = {
         }
     },
 
+    /**
+     * Hides the 'Flip Board' button if Auto-flip is enabled (since it happens automatically).
+     */
     updateFlipButtonVisibility() {
         const flipBoardBtn = document.getElementById('flip-board-btn');
         if (flipBoardBtn) {
-            if (this.activeSettings.autoFlip) {
-                flipBoardBtn.classList.add('hidden');
-            } else {
-                flipBoardBtn.classList.remove('hidden');
-            }
+            flipBoardBtn.classList.toggle('hidden', this.activeSettings.autoFlip);
         }
     },
 
+    /**
+     * Initialises the board renderer and engine state for a new match.
+     */
     initializeBoard() {
-        // Ensure UI panels are correctly shown/hidden
         this.updatePanelVisibility();
-
-        // Initialize the classic chess board with current gamemode settings
-        console.log(`Initializing classic board with ${this.currentMode} mode settings`, this.currentSettings);
-
-        // Apply gamemode-specific settings
         this.applyGamemodeSettings();
 
-        // Reset pagination
         BoardRenderer.historyPage = 1;
-
-        // Initialize the classic board renderer
         BoardRenderer.init();
 
-        // If bot is playing and it's their turn (though it should be white's turn initially)
+        // Check if the bot should make the first move
         this.checkBotMove();
     },
 
+    /**
+     * Triggers the bot's move selection if it is currently the bot's turn.
+     */
     async checkBotMove() {
         const botColor = this.activeSettings.playerColor === 'white' ? 'black' : 'white';
         if (this.activeSettings.botDifficulty !== 'none' && GameLogic.turn === botColor && !GameLogic.isPromoting) {
-            console.log("Bot is thinking...");
             await ChessBot.makeMove(this.activeSettings.botDifficulty, botColor);
-            console.log("Bot move completed");
         }
     },
 
+    /**
+     * Reverts the last move. In bot matches, reverts two plies to return to the player's turn.
+     */
     undoLastMove() {
         if (GameLogic.isPromoting) return;
 
-        // In human vs bot, we want to undo both the bot's move and the player's last move
         if (this.activeSettings.botDifficulty !== 'none') {
-            // If it's currently human's turn, bot just moved, so undo two steps (bot's and player's)
-            // If it's currently bot's turn (waiting for bot), just undo one (player's)
+            // Revert both the bot's and the player's move if it's the player's turn
             if (GameLogic.turn === this.activeSettings.playerColor) {
                 GameLogic.undoMove();
                 GameLogic.undoMove();
@@ -653,23 +699,20 @@ const GamemodeManager = {
                 GameLogic.undoMove();
             }
         } else {
-            // In human vs human, just undo one move
             GameLogic.undoMove();
         }
 
-        // Prevent animation on undo
         BoardRenderer.lastMoveProcessed = GameLogic.lastMove;
         BoardRenderer.render();
-
-        // Check if the bot needs to move (e.g. after undoing a move)
         this.checkBotMove();
     },
 
+    /**
+     * Syncs engine configuration with the active match settings.
+     */
     applyGamemodeSettings() {
-        // Apply the current gamemode settings to the game engine
         const settings = this.currentSettings;
 
-        // Apply timer settings
         if (this.activeSettings.timeLimit !== 'none') {
             const timeSeconds = parseInt(this.activeSettings.timeLimit);
             GameLogic.timerEnabled = true;
@@ -681,7 +724,6 @@ const GamemodeManager = {
             GameLogic.stopTimer();
         }
 
-        // Apply sandbox mode
         if (settings.sandboxMode) {
             GameLogic.isSandboxMode = true;
             GameLogic.sandboxFreeMovementEnabled = this.activeSettings.freeMovement;
@@ -692,7 +734,6 @@ const GamemodeManager = {
             GameLogic.sandboxFreeMovementEnabled = false;
         }
 
-        // Apply shared settings
         GameLogic.autoFlip = this.activeSettings.autoFlip;
         if (GameLogic.autoFlip) {
             GameLogic.perspective = GameLogic.turn;
@@ -701,6 +742,9 @@ const GamemodeManager = {
         }
     },
 
+    /**
+     * Resets the game state and returns to the main menu.
+     */
     returnToMenu() {
         const gamemodeScreen = document.getElementById('gamemode-screen');
         const settingsScreen = document.getElementById('settings-screen');
@@ -709,7 +753,6 @@ const GamemodeManager = {
         const gameResultDiv = document.getElementById('game-result');
 
         if (gamemodeScreen && boardScreen) {
-            // Reset board before hiding
             GameLogic.resetBoard();
             BoardRenderer.historyPage = 1;
 
@@ -719,22 +762,18 @@ const GamemodeManager = {
             if (gameResultDiv) gameResultDiv.classList.add('hidden');
             gamemodeScreen.classList.remove('hidden');
 
-            // Reset gamemode settings
             GameLogic.isSandboxMode = false;
             GameLogic.sandboxFreeMovementEnabled = false;
             this.selectedPalettePiece = null;
             document.querySelectorAll('.palette-piece').forEach(p => p.classList.remove('active'));
             document.getElementById('piece-palette').classList.add('hidden');
 
-            // Reset current mode and settings
             this.currentMode = null;
             this.currentSettings = null;
             this.currentGameType = null;
 
-            // Reset analysis state
             AnalysisManager.exitAnalysis();
 
-            // Reset active settings
             this.activeSettings = {
                 autoFlip: false,
                 freeMovement: false,
@@ -743,17 +782,15 @@ const GamemodeManager = {
                 timeLimit: 'none'
             };
 
-            // Reset perspective UI
             GameLogic.autoFlip = false;
             this.updateFlipButtonVisibility();
-
-            console.log('Returned to gamemode selection menu - board reset');
         }
     }
 };
 
-// Initialize on DOM content loaded
+/**
+ * Global initialisation on DOM load.
+ */
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Chess Game Initialised");
     GamemodeManager.init();
 });
