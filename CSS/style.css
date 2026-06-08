@@ -1,3 +1,9 @@
+/*
+ * Core Game Styles
+ * Handles the main board layout, square themes, piece animations,
+ * and in-game UI components (side panel, timers, results).
+ */
+
 /* Reset and center everything on the screen */
 * {
     box-sizing: border-box;
@@ -33,12 +39,14 @@ html, body {
     max-width: 100%;
 }
 
-/* The Container uses CSS Grid to create a 2x2 layout:
-   Top-Left: Numbers column
-   Top-Right: The Chessboard
-   Bottom-Left: Empty corner
-   Bottom-Right: Letters row
-*/
+/**
+ * Layout Architecture
+ * The Board Container uses CSS Grid to create a 2x2 layout:
+ * Top-Left: Numbers column (Ranks)
+ * Top-Right: The Chessboard grid
+ * Bottom-Left: Empty corner
+ * Bottom-Right: Letters row (Files)
+ */
 .board-wrapper {
     display: grid;
     grid-template-columns: var(--coordinate-size) var(--board-size);

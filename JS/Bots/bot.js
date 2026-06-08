@@ -1,3 +1,11 @@
+/**
+ * ChessBot
+ * An automated opponent with three difficulty levels:
+ * - Easy: Random move selection.
+ * - Medium: Greedy material-based evaluation.
+ * - Hard: Minimax search with Alpha-Beta pruning, Quiescence Search,
+ *         MVV-LVA move ordering, and Opening Book support.
+ */
 const ChessBot = {
     pieceValues: {
         'P': 100,
@@ -8,8 +16,11 @@ const ChessBot = {
         'K': 20000
     },
 
-    // Piece-Square Tables (PSTs) to encourage better positional play
-    // Tables from perspective of white. For black, rows are flipped.
+    /**
+     * Piece-Square Tables (PSTs) to encourage better positional play.
+     * Higher values incentivize pieces to move to specific squares.
+     * Tables are defined for White; they are vertically flipped for Black.
+     */
     pst: {
         'P': [
             [0,  0,  0,  0,  0,  0,  0,  0],
@@ -73,8 +84,13 @@ const ChessBot = {
         ]
     },
 
+    /**
+     * Entry point for bot turn. Selects and executes a move based on difficulty.
+     * @param {string} difficulty - 'easy', 'medium', or 'hard'.
+     * @param {string} color - The bot's color.
+     */
     async makeMove(difficulty, color) {
-        // Add a small delay to make it feel more natural
+        // Human-like delay before moving
         await new Promise(resolve => setTimeout(resolve, 600));
 
         const moves = GameLogic.getAllValidMoves(color);
@@ -82,7 +98,7 @@ const ChessBot = {
 
         let selectedMove;
 
-        // Try opening book first for hard difficulty
+        // 'Hard' difficulty prioritises opening book continuations
         if (difficulty === 'hard') {
             selectedMove = this.getOpeningMove(moves);
         }
@@ -100,7 +116,7 @@ const ChessBot = {
         if (selectedMove) {
             const result = GameLogic.movePiece(selectedMove.fR, selectedMove.fC, selectedMove.tR, selectedMove.tC);
             if (result === "promote") {
-                // Bots always promote to Queen for simplicity
+                // Bots always promote to Queen for maximum advantage
                 GameLogic.promotePawn('Q');
             }
             BoardRenderer.render();
@@ -109,31 +125,33 @@ const ChessBot = {
         return false;
     },
 
+    /**
+     * Picks a move at random.
+     */
     getRandomMove(moves) {
         return moves[Math.floor(Math.random() * moves.length)];
     },
 
+    /**
+     * Consults the OpeningBook for the current move sequence.
+     */
     getOpeningMove(moves) {
         if (typeof OpeningBook === 'undefined') return null;
 
-        // Strip check/mate indicators from history to match book
+        // Flatten history and remove SAN indicators (+, #) for lookup
         const history = GameLogic.moveLog.map(m => m.replace(/[+#]$/, '')).join(' ');
         const possibleContinuations = OpeningBook[history];
 
         if (possibleContinuations && possibleContinuations.length > 0) {
-            console.log(`Opening book match found for history: "${history}". Options: ${possibleContinuations}`);
-            // Shuffle possible continuations to try them randomly
             const shuffled = [...possibleContinuations].sort(() => Math.random() - 0.5);
 
             for (const chosenNotation of shuffled) {
-                // Find which move in 'moves' matches 'chosenNotation'
                 for (const move of moves) {
                     const piece = GameLogic.boardState[move.fR][move.fC];
                     const targetPiece = GameLogic.boardState[move.tR][move.tC];
 
                     const notation = this.getNotationForMove(move, piece, targetPiece);
                     if (notation === chosenNotation) {
-                        console.log(`Bot chose opening move: ${notation}`);
                         return move;
                     }
                 }
@@ -142,12 +160,14 @@ const ChessBot = {
         return null;
     },
 
+    /**
+     * Generates a SAN string for a candidate move (internal helper for opening book).
+     */
     getNotationForMove(move, piece, targetPiece) {
         const files = 'abcdefgh';
         const isPawn = piece[1] === 'P';
         const pieceType = isPawn ? '' : piece[1];
 
-        // Handle En Passant for notation
         const isEnPassant = isPawn && GameLogic.enPassantTarget &&
                            move.tR === GameLogic.enPassantTarget.row &&
                            move.tC === GameLogic.enPassantTarget.col;
@@ -157,7 +177,7 @@ const ChessBot = {
 
         let moveNotation = pieceType;
         if (isPawn && capture) {
-            moveNotation += files[move.fC]; // e.g., exd4
+            moveNotation += files[move.fC];
         }
         moveNotation += capture + toSquare;
 
@@ -165,7 +185,6 @@ const ChessBot = {
             moveNotation = move.tC > move.fC ? 'O-O' : 'O-O-O';
         }
 
-        // If it's a pawn move without capture, it should just be the toSquare (e.g., e4)
         if (isPawn && !capture) {
             moveNotation = toSquare;
         }
@@ -173,6 +192,9 @@ const ChessBot = {
         return moveNotation;
     },
 
+    /**
+     * Picks the move that captures the most valuable piece.
+     */
     getGreedyMove(moves) {
         let bestMoves = [];
         let maxGain = -Infinity;
@@ -195,10 +217,12 @@ const ChessBot = {
         return bestMoves[Math.floor(Math.random() * bestMoves.length)];
     },
 
+    /**
+     * Recursive Minimax search with Alpha-Beta pruning.
+     * Selects from the top moves to introduce non-deterministic behaviour.
+     */
     getBestMoveMinimax(moves, depth, color) {
         let moveValues = [];
-
-        // Sort moves to improve alpha-beta pruning (captures first)
         const sortedMoves = this.orderMoves(moves, GameLogic.boardState);
 
         for (let move of sortedMoves) {
@@ -216,11 +240,9 @@ const ChessBot = {
             moveValues.push({ move, value: boardValue });
         }
 
-        // Sort moves by value descending
         moveValues.sort((a, b) => b.value - a.value);
 
-        // Randomly pick from moves that are close to the best move (within 30 points)
-        // This makes the bot less predictable and more "human-like"
+        // Pick randomly among moves within 30 points of the best score
         const threshold = 30;
         const bestValue = moveValues[0].value;
         const goodMoves = moveValues.filter(mv => mv.value >= bestValue - threshold);
@@ -228,6 +250,9 @@ const ChessBot = {
         return goodMoves[Math.floor(Math.random() * goodMoves.length)].move;
     },
 
+    /**
+     * Minimax algorithm with Alpha-Beta pruning.
+     */
     minimax(depth, board, alpha, beta, color, enPassant, hasMoved) {
         if (depth === 0) {
             return this.quiescenceSearch(board, alpha, beta, color, enPassant, hasMoved);
@@ -237,12 +262,11 @@ const ChessBot = {
 
         if (moves.length === 0) {
             if (GameLogic.isInCheck(color, board, enPassant)) {
-                return -10000 - depth; // Prefer quicker checkmates
+                return -10000 - depth; // Penalise checkmate based on depth
             }
             return 0; // Stalemate
         }
 
-        // Sort moves to improve alpha-beta pruning
         const sortedMoves = this.orderMoves(moves, board);
 
         let maxEval = -Infinity;
@@ -261,13 +285,16 @@ const ChessBot = {
         return maxEval;
     },
 
+    /**
+     * Quiescence Search extends search for capture sequences to avoid the 'horizon effect'.
+     */
     quiescenceSearch(board, alpha, beta, color, enPassant, hasMoved) {
         let standbyEval = this.evaluateBoard(board, color);
         if (standbyEval >= beta) return beta;
         if (alpha < standbyEval) alpha = standbyEval;
 
         const moves = GameLogic.getAllValidMoves(color, board, enPassant, hasMoved);
-        // Only consider captures (including en passant) in quiescence search
+        // Only evaluate 'loud' moves (captures)
         const captures = moves.filter(move => {
             const isStandardCapture = board[move.tR][move.tC] !== '.';
             const isEnPassant = board[move.fR][move.fC][1] === 'P' && enPassant && move.tR === enPassant.row && move.tC === enPassant.col;
@@ -290,6 +317,10 @@ const ChessBot = {
         return alpha;
     },
 
+    /**
+     * Orders moves to prioritise captures (MVV-LVA) and good positions (PST),
+     * improving the efficiency of Alpha-Beta pruning.
+     */
     orderMoves(moves, board) {
         return moves.sort((a, b) => {
             const pieceA = board[a.fR][a.fC];
@@ -304,7 +335,6 @@ const ChessBot = {
             if (targetA !== '.') {
                 scoreA = 100 * this.pieceValues[targetA[1]] - this.pieceValues[pieceA[1]];
             } else {
-                // If not a capture, prefer moving to a better square according to PST
                 const colorA = pieceA.startsWith('w') ? 'white' : 'black';
                 scoreA = colorA === 'white' ? this.pst[pieceA[1]][a.tR][a.tC] : this.pst[pieceA[1]][7 - a.tR][a.tC];
             }
@@ -320,6 +350,9 @@ const ChessBot = {
         });
     },
 
+    /**
+     * Static evaluation function combining material weight and PST positioning.
+     */
     evaluateBoard(board, color) {
         let whiteEval = 0;
         let blackEval = 0;
@@ -333,7 +366,6 @@ const ChessBot = {
                 const type = piece[1];
                 let value = this.pieceValues[type];
 
-                // PST
                 if (pieceColor === 'white') {
                     value += this.pst[type][r][c];
                     whiteEval += value;
@@ -344,12 +376,13 @@ const ChessBot = {
             }
         }
 
-        // Return evaluation from the perspective of 'color'
         const eval = whiteEval - blackEval;
         return color === 'white' ? eval : -eval;
     },
 
-
+    /**
+     * In-place board modification for move simulation during search.
+     */
     simulateMove(move, board, enPassant, hasMoved) {
         const piece = board[move.fR][move.fC];
         const undoInfo = {
@@ -359,7 +392,6 @@ const ChessBot = {
             oldHasMoved: { ...hasMoved }
         };
 
-        // Handle Castling
         if (piece[1] === 'K' && move.tR === move.fR && Math.abs(move.tC - move.fC) === 2) {
             const isKingside = move.tC > move.fC;
             const rookCol = isKingside ? 7 : 0;
@@ -371,7 +403,6 @@ const ChessBot = {
             board[move.fR][rookCol] = '.';
         }
 
-        // Handle En Passant
         if (piece[1] === 'P' && enPassant && move.tR === enPassant.row && move.tC === enPassant.col) {
             const victimRow = piece.startsWith('w') ? move.tR + 1 : move.tR - 1;
             undoInfo.victimRow = victimRow;
@@ -379,16 +410,13 @@ const ChessBot = {
             board[victimRow][move.tC] = '.';
         }
 
-        // Update board
         board[move.tR][move.tC] = piece;
         board[move.fR][move.fC] = '.';
 
-        // Handle promotion
         if (piece[1] === 'P' && (move.tR === 0 || move.tR === 7)) {
             board[move.tR][move.tC] = piece[0] + 'Q';
         }
 
-        // Update hasMoved
         if (piece === 'wK') hasMoved.wK = true;
         if (piece === 'bK') hasMoved.bK = true;
         if (move.fR === 7 && move.fC === 0) hasMoved.wR_left = true;
@@ -399,6 +427,9 @@ const ChessBot = {
         return undoInfo;
     },
 
+    /**
+     * Reverts board modifications made by simulateMove.
+     */
     undoMove(board, undoInfo, hasMoved) {
         board[undoInfo.fR][undoInfo.fC] = undoInfo.piece;
         board[undoInfo.tR][undoInfo.tC] = undoInfo.target;

@@ -215,12 +215,19 @@
         </div>
     </div>
 
+    <!-- Application Logic Scripts -->
     <script src="JS/pieces.js"></script>
     <script src="JS/engine.js"></script>
+
+    <!-- Bot and Opening Book logic -->
     <script src="JS/Bots/openings.js"></script>
     <script src="JS/Bots/bot.js"></script>
+
+    <!-- Modular Gamemode Definitions -->
     <script src="JS/Gamemodes/Classic.js"></script>
     <script src="JS/Gamemodes/Sandbox.js"></script>
+
+    <!-- UI Rendering and Interaction Orchestration -->
     <script src="JS/board.js"></script>
     <script src="JS/main.js"></script>
 </body>

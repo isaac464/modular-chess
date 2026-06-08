@@ -1,20 +1,29 @@
+/**
+ * BoardRenderer
+ * Responsible for the visual representation of the chessboard, pieces,
+ * move history, timers, and interactive elements like right-click arrows.
+ */
 const BoardRenderer = {
     container: document.getElementById('chessboard'),
     svgContainer: null,
+    // Mapping of engine piece codes to Unicode chess characters
     pieceSymbols: {
         'wR': '♖', 'wN': '♘', 'wB': '♗', 'wQ': '♕', 'wK': '♔', 'wP': '♙',
         'bR': '♜', 'bN': '♞', 'bB': '♝', 'bQ': '♛', 'bK': '♚', 'bP': '♟'
     },
 
-    // Tracking for right-click arrows
+    // Tracking for right-click analysis arrows
     rightClickStart: null,
     arrows: [],
-    lastMoveProcessed: null,
+    lastMoveProcessed: null, // Tracks the last animated move to prevent repeat triggers
 
-    // Pagination
+    // Pagination for the move history panel
     historyPage: 1,
-    movesPerPage: 10, // Standard board size
+    movesPerPage: 10,
 
+    /**
+     * Initialises the renderer and attaches global board-related event listeners.
+     */
     init() {
         this.svgContainer = document.getElementById('arrow-svg');
         this.setupGlobalListeners();
@@ -23,6 +32,9 @@ const BoardRenderer = {
         this.render();
     },
 
+    /**
+     * Binds listeners to the game-over result overlay buttons.
+     */
     setupResultButtonListener() {
         const resultMenuBtn = document.getElementById('result-menu-btn');
         if (resultMenuBtn) {
@@ -39,18 +51,21 @@ const BoardRenderer = {
         }
     },
 
+    /**
+     * Sets up broad listeners for context menu suppression and coordinate recalculation.
+     */
     setupGlobalListeners() {
-        // Prevent default context menu on right-click inside the board
+        // Suppress default context menu to allow custom right-click arrow drawing
         this.container.oncontextmenu = (e) => e.preventDefault();
 
-        // Clear arrows on any standard left click on the document
+        // Left-clicking anywhere on the board/document clears analysis arrows
         document.addEventListener('click', (e) => {
-            if (e.button === 0) { // Left click
+            if (e.button === 0) {
                 this.clearArrows();
             }
         });
 
-        // Handle window resize to keep arrows aligned
+        // Recalculate arrow coordinates when the window is resized to maintain alignment
         window.addEventListener('resize', () => {
             if (this.arrows.length > 0) {
                 this.drawSVGArrows();
@@ -58,11 +73,17 @@ const BoardRenderer = {
         });
     },
 
+    /**
+     * Wipes all SVG arrows from the board.
+     */
     clearArrows() {
         this.arrows = [];
         if (this.svgContainer) this.svgContainer.innerHTML = '';
     },
 
+    /**
+     * Renders rank (1-8) and file (a-h) labels based on the current perspective.
+     */
     renderOutsideCoordinates() {
         const leftCoords = document.getElementById('left-coordinates');
         const bottomCoords = document.getElementById('bottom-coordinates');
@@ -90,24 +111,27 @@ const BoardRenderer = {
         }
     },
 
+    /**
+     * Core render cycle. Rebuilds the DOM for the board and pieces,
+     * calculates animations, and updates UI components (history, timers).
+     */
     render() {
-        // Update coordinates whenever we render
         this.renderOutsideCoordinates();
         this.updateMoveHistoryUI();
 
+        // Determine which board state to show (Live vs Analysis)
         const targetBoard = AnalysisManager.isAnalyzing ? AnalysisManager.getCurrentBoard() : GameLogic.boardState;
         const targetLastMove = AnalysisManager.isAnalyzing ? AnalysisManager.getCurrentLastMove() : GameLogic.lastMove;
 
         const isWhitePerspective = GameLogic.perspective === 'white';
         const oldSquares = Array.from(this.container.querySelectorAll('.square'));
 
-        // Find captured piece for animation
+        // Pre-calculation for capture animations
         let capturedPieceElem = null;
         if (GameLogic.lastMove && GameLogic.lastMove !== this.lastMoveProcessed && GameLogic.lastMove.captured !== '.') {
             const capR = isWhitePerspective ? GameLogic.lastMove.toRow : 7 - GameLogic.lastMove.toRow;
             const capC = isWhitePerspective ? GameLogic.lastMove.toCol : 7 - GameLogic.lastMove.toCol;
 
-            // If it's en passant, the captured piece is in a different square
             let targetSq;
             if (GameLogic.lastMove.isEnPassant) {
                 const victimRow = GameLogic.lastMove.piece.startsWith('w') ? GameLogic.lastMove.toRow + 1 : GameLogic.lastMove.toRow - 1;
@@ -122,10 +146,12 @@ const BoardRenderer = {
             }
         }
 
+        // Clear and prepare board container
         this.container.innerHTML = '';
         this.container.appendChild(this.svgContainer);
         this.clearArrows();
 
+        // Build 8x8 grid
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const row = isWhitePerspective ? r : 7 - r;
@@ -134,6 +160,7 @@ const BoardRenderer = {
                 const square = document.createElement('div');
                 let colorClass = (row + col) % 2 === 0 ? 'white' : 'black';
 
+                // Apply highlighting for selection and last move
                 if (GameLogic.selectedSquare && GameLogic.selectedSquare.row === row && GameLogic.selectedSquare.col === col) {
                     colorClass = 'selected';
                 } else if (targetLastMove &&
@@ -146,7 +173,7 @@ const BoardRenderer = {
                 square.dataset.row = row;
                 square.dataset.col = col;
 
-                // Piece rendering
+                // Render piece if square is not empty
                 const pieceCode = targetBoard[row][col];
                 if (pieceCode !== '.') {
                     const pieceSpan = document.createElement('span');
@@ -154,7 +181,7 @@ const BoardRenderer = {
                     pieceSpan.innerText = this.pieceSymbols[pieceCode];
                     square.appendChild(pieceSpan);
 
-                    // If this is the piece that just moved, prepare animation
+                    // Smooth transition for the piece that just moved
                     if (!AnalysisManager.isAnalyzing && GameLogic.lastMove && GameLogic.lastMove !== this.lastMoveProcessed &&
                         GameLogic.lastMove.toRow === row && GameLogic.lastMove.toCol === col) {
 
@@ -177,21 +204,20 @@ const BoardRenderer = {
                     }
                 }
 
-                // Left click handling
+                // Interaction listeners
                 square.onclick = () => {
                     if (AnalysisManager.isAnalyzing) return;
                     this.handleSquareClick(row, col);
                 };
 
-                // Right click handling for drawing arrows
                 square.onmousedown = (e) => {
-                    if (e.button === 2) { // Right click down
+                    if (e.button === 2) {
                         this.rightClickStart = { row, col };
                     }
                 };
 
                 square.onmouseup = (e) => {
-                    if (e.button === 2 && this.rightClickStart) { // Right click up
+                    if (e.button === 2 && this.rightClickStart) {
                         if (this.rightClickStart.row !== row || this.rightClickStart.col !== col) {
                             this.createArrow(this.rightClickStart, { row, col });
                         }
@@ -203,7 +229,7 @@ const BoardRenderer = {
             }
         }
 
-        // Animate capture if one happened
+        // Execute capture animation (Piece fade/scale out)
         if (capturedPieceElem) {
             const toR = isWhitePerspective ? GameLogic.lastMove.toRow : 7 - GameLogic.lastMove.toRow;
             const toC = isWhitePerspective ? GameLogic.lastMove.toCol : 7 - GameLogic.lastMove.toCol;
@@ -240,6 +266,9 @@ const BoardRenderer = {
         this.updateTimerDisplay();
     },
 
+    /**
+     * Updates the visual countdowns and active status of game timers.
+     */
     updateTimerDisplay() {
         const timerContainer = document.getElementById('game-timers');
         if (!timerContainer) return;
@@ -263,7 +292,7 @@ const BoardRenderer = {
         if (whiteTimer) {
             whiteTimer.innerText = `W: ${formatTime(GameLogic.whiteTime)}`;
             whiteTimer.classList.toggle('active', GameLogic.turn === 'white' && !GameLogic.gameState);
-            whiteTimer.classList.toggle('low-time', GameLogic.whiteTime <= 30);
+            whiteTimer.classList.toggle('low-time', GameLogic.whiteTime <= 30); // Flash red at 30s
         }
 
         if (blackTimer) {
@@ -273,6 +302,9 @@ const BoardRenderer = {
         }
     },
 
+    /**
+     * Refreshes the side-panel move list and handles pagination.
+     */
     updateMoveHistoryUI() {
         const moveList = document.getElementById('move-list');
         if (!moveList) return;
@@ -281,12 +313,11 @@ const BoardRenderer = {
         const totalFullMoves = Math.ceil(GameLogic.moveLog.length / 2);
         const totalPages = Math.max(1, Math.ceil(totalFullMoves / this.movesPerPage));
 
-        // Automatically go to the last page if not analyzing and a new move was made
+        // Auto-advance to latest move page during active play
         if (!AnalysisManager.isAnalyzing) {
             this.historyPage = totalPages;
         }
 
-        // Ensure current page is valid
         if (this.historyPage > totalPages) this.historyPage = totalPages;
         if (this.historyPage < 1) this.historyPage = 1;
 
@@ -329,7 +360,7 @@ const BoardRenderer = {
 
         this.updatePaginationUI(totalPages);
 
-        // Auto-scroll to active move or bottom
+        // Auto-scroll to ensure visibility of current move
         if (AnalysisManager.isAnalyzing) {
             const active = moveList.querySelector('.active-move');
             if (active) active.scrollIntoView({ block: 'nearest' });
@@ -395,16 +426,20 @@ const BoardRenderer = {
         }
     },
 
+    /**
+     * Orchestrates board interactions, translating clicks into engine move commands
+     * or Sandbox piece placement.
+     */
     handleSquareClick(row, col) {
         if (GameLogic.isPromoting) return;
 
-        // Prevent human move during bot's turn in Classic mode
+        // Block input if it is the bot's turn
         const botColor = GamemodeManager.activeSettings.playerColor === 'white' ? 'black' : 'white';
         if (GamemodeManager.activeSettings.botDifficulty !== 'none' && GameLogic.turn === botColor) return;
 
         const isFreeMovement = GameLogic.isSandboxMode && GameLogic.sandboxFreeMovementEnabled;
 
-        // Sandbox Piece Spawning
+        // Sandbox: If a piece is selected in the palette, spawn it on click
         if (GameLogic.isSandboxMode && GamemodeManager.selectedPalettePiece) {
             GameLogic.boardState[row][col] = GamemodeManager.selectedPalettePiece;
             this.render();
@@ -413,6 +448,7 @@ const BoardRenderer = {
 
         const selected = GameLogic.selectedSquare;
         if (selected) {
+            // Attempt to move piece from selected square to clicked square
             const moveResult = GameLogic.movePiece(selected.row, selected.col, row, col);
 
             if (moveResult === true || moveResult === "promote") {
@@ -422,6 +458,7 @@ const BoardRenderer = {
                     GamemodeManager.checkBotMove();
                 }
             } else {
+                // Handle invalid move/selection update
                 const kingInCheck = GameLogic.isInCheck(GameLogic.turn);
                 const piece = GameLogic.getPieceAt(row, col);
 
@@ -433,6 +470,7 @@ const BoardRenderer = {
 
                 this.render();
 
+                // Trigger 'Check Flash' if the user tries an illegal move while in check
                 if (kingInCheck) {
                     requestAnimationFrame(() => {
                         requestAnimationFrame(() => {
@@ -442,6 +480,7 @@ const BoardRenderer = {
                 }
             }
         } else {
+            // Selection logic: Select a piece if it belongs to the active player (or free movement is on)
             const piece = GameLogic.getPieceAt(row, col);
             if (piece !== '.' && (isFreeMovement || (piece.startsWith('w') ? 'white' : 'black') === GameLogic.turn)) {
                 GameLogic.selectedSquare = { row, col };
@@ -459,6 +498,10 @@ const BoardRenderer = {
         this.drawSVGArrows();
     },
 
+    /**
+     * Renders analysis arrows as SVG polylines. Supports straight lines
+     * and L-shaped elbows for knight-style movements.
+     */
     drawSVGArrows() {
         let defs = this.svgContainer.querySelector('defs');
         if (!defs) {
@@ -480,7 +523,6 @@ const BoardRenderer = {
             this.svgContainer.appendChild(defs);
         }
 
-        // Wipe old arrows
         const oldArrows = this.svgContainer.querySelectorAll('polyline');
         oldArrows.forEach(a => a.remove());
 
@@ -504,13 +546,11 @@ const BoardRenderer = {
             const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
             let points = "";
 
-            // If it's an L-shape (Knight move style)
             if ((rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2)) {
-                // Calculate the elbow: move vertically first, then horizontally
+                // Knight-style L-shape: Elbow calculated by maintaining start X and target Y
                 const elbowX = x1;
                 const elbowY = y2;
 
-                // Shorten the final segment so the arrowhead doesn't overlap the center
                 const angle = Math.atan2(y2 - elbowY, x2 - elbowX);
                 const shortX2 = x2 - Math.cos(angle) * 15;
                 const shortY2 = y2 - Math.sin(angle) * 15;

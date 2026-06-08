@@ -1,6 +1,11 @@
+/**
+ * OpeningBook
+ * A dictionary of common chess openings in Standard Algebraic Notation (SAN).
+ * The 'hard' bot uses this to ensure variety and theory-based play in the early game.
+ */
 const OpeningBook = {
-    // Each key is a space-separated string of moves in algebraic notation (matching GameLogic.moveLog)
-    // Each value is an array of possible next moves in algebraic notation
+    // Each key is a space-separated string of preceding moves.
+    // Each value is an array of theoretical continuations.
     "": ["e4", "d4", "Nf3", "c4"],
 
     // King's Pawn responses

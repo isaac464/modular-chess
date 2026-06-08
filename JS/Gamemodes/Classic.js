@@ -1,3 +1,7 @@
+/**
+ * ClassicGamemode
+ * Configuration for the standard chess experience.
+ */
 const ClassicGamemode = {
     name: 'Classic Chess',
     description: 'Play traditional chess with optional time limits',

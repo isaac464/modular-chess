@@ -52,3 +52,31 @@ CHESS ENGINE DEVELOPMENT LOG
 - Introduced a post-game "Analysis Mode" allowing users to navigate the full game history via state snapshots.
 - Overhauled responsive scaling using CSS `clamp()` and `vmin` units to ensure layout integrity across diverse viewport dimensions.
 - Resolved SVG arrow misalignment issues by implementing a window-resize listener for automatic coordinate recalculation.
+
+[2026-06-10] BOT ENGINE ENHANCEMENTS
+- Upgraded "Hard" bot to use Minimax search with a fixed depth of 4 plies.
+- Implemented Alpha-Beta pruning to significantly reduce the search space.
+- Integrated Quiescence Search to mitigate the "horizon effect" by extending search through capture sequences.
+- Added MVV-LVA (Most Valuable Victim - Least Valuable Attacker) move ordering to improve pruning efficiency.
+- Integrated an algebraic-notation-based Opening Book for diverse and theoretical early-game play.
+- Introduced randomized move selection among top-evaluated candidates to ensure non-deterministic behaviour.
+
+[2026-06-12] SANDBOX MODE & CUSTOMISATION
+- Implemented an in-game side panel for Sandbox mode with dedicated 'Settings' and 'Spawn' sections.
+- Created a piece palette with responsive grid layout for spawning pieces directly onto the board.
+- Integrated an "Eraser" tool within the palette to remove pieces from the board.
+- Added a "Free Piece Movement" toggle that bypasses all chess rules and turn validation.
+- Implemented an "Empty Board" start setting for custom position initialisation.
+
+[2026-06-14] GAME TIMERS & ACCESSIBILITY
+- Implemented a dual-timer system with support for standard blitz and rapid time controls.
+- Added a "low-time" visual state with a pulse-red animation when a player has less than 30 seconds remaining.
+- Integrated ARIA labels and keyboard navigation (tabindex, focus-visible states) for all interactive menu cards and game controls.
+- Refactored move history with a paginated UI (10 moves per page) to ensure panel performance and readability during long matches.
+- Enhanced coordinate rendering to automatically remap and rotate labels based on the active board perspective.
+
+[2026-06-15] REFINEMENT & DRAW CONDITIONS
+- Implemented Stalemate detection for games with no legal moves but no active check.
+- Added Threefold Repetition tracking by serialising board states, turn, and en passant eligibility into history snapshots.
+- Refined move notation to include check (+) and checkmate (#) indicators.
+- Synchronised undo logic with the game timer to ensure time is accurately restored to the start of the previous turn.
