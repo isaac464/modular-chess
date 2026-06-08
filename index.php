@@ -217,6 +217,7 @@
 
     <script src="JS/pieces.js"></script>
     <script src="JS/engine.js"></script>
+    <script src="JS/Bots/openings.js"></script>
     <script src="JS/Bots/bot.js"></script>
     <script src="JS/Gamemodes/Classic.js"></script>
     <script src="JS/Gamemodes/Sandbox.js"></script>
