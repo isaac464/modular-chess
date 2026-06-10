@@ -14,6 +14,13 @@ const BoardRenderer = {
 
     // Tracking for right-click analysis arrows
     rightClickStart: null,
+
+    // Drag and drop state
+    isDragging: false,
+    draggedPiece: null,
+    dragStart: null, // {row, col, x, y}
+    dragOffset: { x: 0, y: 0 },
+    isDraggingWasActive: false,
     arrows: [],
     lastMoveProcessed: null, // Tracks the last animated move to prevent repeat triggers
 
@@ -62,6 +69,17 @@ const BoardRenderer = {
         document.addEventListener('click', (e) => {
             if (e.button === 0) {
                 this.clearArrows();
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            this.handleMouseMove(e);
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            // Handle drops outside the board
+            if (this.isDragging) {
+                this.handleMouseUp(e, -1, -1);
             }
         });
 
@@ -124,6 +142,12 @@ const BoardRenderer = {
         const targetLastMove = AnalysisManager.isAnalyzing ? AnalysisManager.getCurrentLastMove() : GameLogic.lastMove;
 
         const isWhitePerspective = GameLogic.perspective === 'white';
+
+        // Calculate valid moves if a square is selected
+        let validMoves = [];
+        if (!AnalysisManager.isAnalyzing && GameLogic.selectedSquare) {
+            validMoves = GameLogic.getValidMovesForPiece(GameLogic.selectedSquare.row, GameLogic.selectedSquare.col);
+        }
         const oldSquares = Array.from(this.container.querySelectorAll('.square'));
 
         // Pre-calculation for capture animations
@@ -173,12 +197,30 @@ const BoardRenderer = {
                 square.dataset.row = row;
                 square.dataset.col = col;
 
+                // Render move indicators
+                const moveHint = validMoves.find(m => m.row === row && m.col === col);
+                if (moveHint) {
+                    const indicator = document.createElement('div');
+                    const isCapture = targetBoard[row][col] !== '.' ||
+                        (GameLogic.boardState[GameLogic.selectedSquare.row][GameLogic.selectedSquare.col][1] === 'P' &&
+                         GameLogic.enPassantTarget && row === GameLogic.enPassantTarget.row && col === GameLogic.enPassantTarget.col);
+
+                    indicator.className = isCapture ? 'capture-indicator' : 'move-indicator';
+                    square.appendChild(indicator);
+                }
+
                 // Render piece if square is not empty
                 const pieceCode = targetBoard[row][col];
                 if (pieceCode !== '.') {
                     const pieceSpan = document.createElement('span');
                     pieceSpan.className = 'piece';
                     pieceSpan.innerText = this.pieceSymbols[pieceCode];
+
+                    // Hide piece if it's currently being dragged
+                    if (this.isDragging && this.dragStart.row === row && this.dragStart.col === col) {
+                        pieceSpan.style.opacity = '0';
+                    }
+
                     square.appendChild(pieceSpan);
 
                     // Smooth transition for the piece that just moved
@@ -205,14 +247,21 @@ const BoardRenderer = {
                 }
 
                 // Interaction listeners
-                square.onclick = () => {
+                square.onclick = (e) => {
                     if (AnalysisManager.isAnalyzing) return;
+                    // If we just finished a drag, don't trigger click move logic
+                    if (this.isDraggingWasActive) {
+                        this.isDraggingWasActive = false;
+                        return;
+                    }
                     this.handleSquareClick(row, col);
                 };
 
                 square.onmousedown = (e) => {
                     if (e.button === 2) {
                         this.rightClickStart = { row, col };
+                    } else if (e.button === 0 && !AnalysisManager.isAnalyzing) {
+                        this.handleMouseDown(e, row, col);
                     }
                 };
 
@@ -222,6 +271,8 @@ const BoardRenderer = {
                             this.createArrow(this.rightClickStart, { row, col });
                         }
                         this.rightClickStart = null;
+                    } else if (e.button === 0 && !AnalysisManager.isAnalyzing) {
+                        this.handleMouseUp(e, row, col);
                     }
                 };
 
@@ -423,6 +474,96 @@ const BoardRenderer = {
             }
             
             resultDiv.classList.remove('hidden');
+        }
+    },
+
+    handleMouseDown(e, row, col) {
+        if (GameLogic.isPromoting) return;
+
+        this.isDraggingWasActive = false;
+
+        const piece = GameLogic.getPieceAt(row, col);
+        const botColor = GamemodeManager.activeSettings.playerColor === 'white' ? 'black' : 'white';
+        const isBotTurn = GamemodeManager.activeSettings.botDifficulty !== 'none' && GameLogic.turn === botColor;
+        const isFreeMovement = GameLogic.isSandboxMode && GameLogic.sandboxFreeMovementEnabled;
+        const isPieceSelectable = piece !== '.' && (isFreeMovement || (piece.startsWith('w') ? 'white' : 'black') === GameLogic.turn);
+
+        if (isPieceSelectable && !isBotTurn) {
+            this.isDragging = true;
+            this.dragStart = { row, col, x: e.clientX, y: e.clientY };
+
+            // Create a floating piece element for dragging
+            this.draggedPiece = document.createElement('div');
+            this.draggedPiece.className = 'piece';
+            this.draggedPiece.innerText = this.pieceSymbols[piece];
+            this.draggedPiece.style.position = 'fixed';
+            this.draggedPiece.style.zIndex = '1000';
+            this.draggedPiece.style.pointerEvents = 'none';
+            this.draggedPiece.style.transition = 'none';
+
+            const square = e.currentTarget;
+            const rect = square.getBoundingClientRect();
+            this.dragOffset = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+
+            this.updateDraggedPiecePosition(e.clientX, e.clientY);
+            document.body.appendChild(this.draggedPiece);
+
+            // If not already selected, select it to show move indicators
+            if (!GameLogic.selectedSquare || GameLogic.selectedSquare.row !== row || GameLogic.selectedSquare.col !== col) {
+                GameLogic.selectedSquare = { row, col };
+                this.render();
+            }
+        }
+    },
+
+    handleMouseMove(e) {
+        if (this.isDragging && this.draggedPiece) {
+            this.updateDraggedPiecePosition(e.clientX, e.clientY);
+
+            // Check if we've moved enough to be considered a drag
+            const dist = Math.hypot(e.clientX - this.dragStart.x, e.clientY - this.dragStart.y);
+            if (dist > 5) {
+                this.isDraggingWasActive = true;
+            }
+        }
+    },
+
+    handleMouseUp(e, row, col) {
+        if (!this.isDragging) return;
+
+        const fromRow = this.dragStart.row;
+        const fromCol = this.dragStart.col;
+
+        this.isDragging = false;
+        if (this.draggedPiece) {
+            this.draggedPiece.remove();
+            this.draggedPiece = null;
+        }
+
+        // If dropped on a different square, attempt move
+        if (fromRow !== row || fromCol !== col) {
+            const moveResult = GameLogic.movePiece(fromRow, fromCol, row, col);
+            if (moveResult === true || moveResult === "promote") {
+                GameLogic.selectedSquare = null;
+                this.render();
+                if (moveResult === true) {
+                    GamemodeManager.checkBotMove();
+                }
+                return;
+            }
+        }
+
+        // Always re-render to show the hidden piece again
+        this.render();
+    },
+
+    updateDraggedPiecePosition(x, y) {
+        if (this.draggedPiece) {
+            this.draggedPiece.style.left = (x - this.dragOffset.x) + 'px';
+            this.draggedPiece.style.top = (y - this.dragOffset.y) + 'px';
         }
     },
 
