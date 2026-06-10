@@ -239,7 +239,7 @@ const GameLogic = {
      * Performs a comprehensive check on whether a move is legal under chess rules.
      * Handles standard movement, turn validation, and special castling conditions.
      */
-    checkMoveIsValid(fR, fC, tR, tC, board = this.boardState, turn = this.turn, enPassant = this.enPassantTarget, hasMoved = this.hasMoved) {
+    checkMoveIsValid(fR, fC, tR, tC, board = this.boardState, turn = this.turn, enPassant = this.enPassantTarget, hasMoved = this.hasMoved, ignoreSandbox = false) {
         const piece = board[fR][fC];
         if (piece === '.') return false;
 
@@ -254,7 +254,7 @@ const GameLogic = {
         }
 
         // Sandbox Override: Free Piece Movement bypasses standard turn/rule validation
-        if (this.isSandboxMode && this.sandboxFreeMovementEnabled && board === this.boardState) {
+        if (!ignoreSandbox && this.isSandboxMode && this.sandboxFreeMovementEnabled && board === this.boardState) {
             return true;
         }
 
@@ -297,14 +297,38 @@ const GameLogic = {
             for (let fC = 0; fC < 8; fC++) {
                 const piece = board[fR][fC];
                 if (piece !== '.' && (piece.startsWith('w') ? 'white' : 'black') === color) {
-                    for (let tR = 0; tR < 8; tR++) {
-                        for (let tC = 0; tC < 8; tC++) {
-                            if (this.checkMoveIsValid(fR, fC, tR, tC, board, color, enPassant, hasMoved)) {
-                                if (!this.wouldBeInCheckSim(fR, fC, tR, tC, board, color, enPassant)) {
-                                    moves.push({ fR, fC, tR, tC });
-                                }
-                            }
-                        }
+                    const pieceMoves = this.getValidMovesForPiece(fR, fC, board, enPassant, hasMoved, false);
+                    pieceMoves.forEach(m => moves.push({ fR, fC, tR: m.row, tC: m.col }));
+                }
+            }
+        }
+        return moves;
+    },
+
+    /**
+     * Returns all legal destination squares for a piece at a given position.
+     */
+    getValidMovesForPiece(fR, fC, board = this.boardState, enPassant = this.enPassantTarget, hasMoved = this.hasMoved, ignoreSandbox = true) {
+        const piece = board[fR][fC];
+        if (piece === '.') return [];
+
+        const pieceColor = piece.startsWith('w') ? 'white' : 'black';
+        const moves = [];
+
+        // When ignoreSandbox is true, we show legal chess moves even in Sandbox free movement mode.
+        // We also temporarily treat it as this piece's turn to get its legal options.
+        const turnToUse = ignoreSandbox ? pieceColor : this.turn;
+
+        for (let tR = 0; tR < 8; tR++) {
+            for (let tC = 0; tC < 8; tC++) {
+                if (this.checkMoveIsValid(fR, fC, tR, tC, board, turnToUse, enPassant, hasMoved, ignoreSandbox)) {
+                    // Sandbox bypasses check validation for the actual move,
+                    // but for "legal moves" display we might still want to show them.
+                    // If ignoreSandbox is false (called from getAllValidMoves), we respect sandbox settings.
+                    const skipCheck = !ignoreSandbox && this.isSandboxMode && this.sandboxFreeMovementEnabled && board === this.boardState;
+
+                    if (skipCheck || !this.wouldBeInCheckSim(fR, fC, tR, tC, board, pieceColor, enPassant)) {
+                        moves.push({ row: tR, col: tC });
                     }
                 }
             }
