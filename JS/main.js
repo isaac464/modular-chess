@@ -431,7 +431,7 @@ const GamemodeManager = {
                     // Ensure the 'none' (Human) option is excluded when explicitly playing VS Bot
                     settingsToShow = settingsToShow.map(setting => ({
                         ...setting,
-                        options: (setting.options || []).filter(opt => opt.value !== 'none')
+                        options: (setting.options || []).filter(opt => opt.label !== 'Human')
                     }));
                 }
             }
