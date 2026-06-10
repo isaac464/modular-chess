@@ -21,6 +21,7 @@ const BoardRenderer = {
     dragStart: null, // {row, col, x, y}
     dragOffset: { x: 0, y: 0 },
     isDraggingWasActive: false,
+    lastMoveWasDrag: false,
     arrows: [],
     lastMoveProcessed: null, // Tracks the last animated move to prevent repeat triggers
 
@@ -225,7 +226,7 @@ const BoardRenderer = {
 
                     // Smooth transition for the piece that just moved
                     if (!AnalysisManager.isAnalyzing && GameLogic.lastMove && GameLogic.lastMove !== this.lastMoveProcessed &&
-                        GameLogic.lastMove.toRow === row && GameLogic.lastMove.toCol === col) {
+                        GameLogic.lastMove.toRow === row && GameLogic.lastMove.toCol === col && !this.lastMoveWasDrag) {
 
                         const fromR = isWhitePerspective ? GameLogic.lastMove.fromRow : 7 - GameLogic.lastMove.fromRow;
                         const fromC = isWhitePerspective ? GameLogic.lastMove.fromCol : 7 - GameLogic.lastMove.fromCol;
@@ -547,11 +548,34 @@ const BoardRenderer = {
         if (fromRow !== row || fromCol !== col) {
             const moveResult = GameLogic.movePiece(fromRow, fromCol, row, col);
             if (moveResult === true || moveResult === "promote") {
+                this.lastMoveWasDrag = true;
                 GameLogic.selectedSquare = null;
                 this.render();
                 if (moveResult === true) {
                     GamemodeManager.checkBotMove();
                 }
+                return;
+            }
+        }
+
+        // Reset drag flag if not a successful move
+        this.lastMoveWasDrag = false;
+
+        // Snap back animation for invalid moves or drops back on start square
+        if (this.draggedPiece) {
+            const square = this.container.querySelector(`.square[data-row='${fromRow}'][data-col='${fromCol}']`);
+            if (square) {
+                const rect = square.getBoundingClientRect();
+                this.draggedPiece.style.transition = 'all 0.2s ease-out';
+                this.draggedPiece.style.left = rect.left + 'px';
+                this.draggedPiece.style.top = rect.top + 'px';
+
+                const pieceToCleanup = this.draggedPiece;
+                setTimeout(() => {
+                    pieceToCleanup.remove();
+                    this.render();
+                }, 200);
+                this.draggedPiece = null;
                 return;
             }
         }
@@ -573,6 +597,8 @@ const BoardRenderer = {
      */
     handleSquareClick(row, col) {
         if (GameLogic.isPromoting) return;
+
+        this.lastMoveWasDrag = false;
 
         // Block input if it is the bot's turn
         const botColor = GamemodeManager.activeSettings.playerColor === 'white' ? 'black' : 'white';
