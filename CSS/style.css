@@ -260,6 +260,12 @@ html, body {
     z-index: 5;
 }
 
+.piece.dragging {
+    transform: scale(1.1);
+    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+    cursor: grabbing;
+}
+
 @media (max-width: 1000px) {
     .side-panel {
         width: 100%;
@@ -273,6 +279,33 @@ html, body {
 .black { background-color: #b58863; }
 .selected { background-color: #7b945d !important; }
 .last-move { background-color: #baca44 !important; }
+
+/* Move Indicators */
+.move-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 25%;
+    height: 25%;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 50%;
+    z-index: 15;
+    pointer-events: none;
+}
+
+.capture-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85%;
+    height: 85%;
+    border: 6px solid rgba(0, 0, 0, 0.15);
+    border-radius: 50%;
+    z-index: 15;
+    pointer-events: none;
+}
 
 .hidden { display: none !important; }
 
